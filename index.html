@@ -11,7 +11,7 @@
 <!-- Built-in broadcast database. Filled in automatically when you download the hosted copy from the Broadcast setup,
      so people you share the app with can broadcast with one click instead of creating their own database. -->
 <meta name="pb-default-db" content="https://pool-bracket-aabd0-default-rtdb.firebaseio.com">
-<meta name="pb-version" content="2026.11.10.28">
+<meta name="pb-version" content="2026.11.10.29">
 <meta name="pb-owner" content="8a2c855b843601999226f70301194399cf759b8bc62fd838119026ce0ceb3161">
 <meta name="pb-default-host" content="https://cgammons01-sys.github.io/pool-bracket/">
 <link rel="manifest" id="manifest">
@@ -187,7 +187,7 @@ body.board #verTag,body.viewer #verTag{display:none}
 .brballs button{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:6px 8px;font-weight:700;font-size:16px}
 .brballs button small{font-weight:500;font-size:11px;color:#7fc49a}
 /* in-page dialogs */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
 .dlg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;max-width:680px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:14px}
 .dlg h3{margin:0 0 12px;font-size:18px}
 .dlg h4{margin:16px 0 6px;font-size:14px;color:var(--gold);text-transform:uppercase;letter-spacing:.5px}
@@ -1452,9 +1452,9 @@ function openBreakRun(){
   const addName=n=>{n=(n||'').trim();if(!n)return;if(!(n in BR.tickets))BR.tickets[n]=0;};
   q('#brPick').onchange=e=>{const n=e.target.value;if(!n)return;addName(n);BR.tickets[n]=(+BR.tickets[n]||0)+1;BR_OPEN=n;brArm();changed();};
   q('#brAddAll').onclick=()=>{const src=brSourceNames();if(!src.length){alert('Add players to the tournament first.');return;}src.forEach(addName);changed();};
-  q('#brNewPot').onclick=()=>{const rem=brHistoryOrPot();
-    if(!confirm('Start a new Break & Run pot? Tickets and draws will be cleared.'))return;
-    const carry=rem>0&&confirm(`Carry the ${fmt(rem)} left over into the new pot?`);
+  q('#brNewPot').onclick=async()=>{const rem=brHistoryOrPot();
+    if(!await dialog({title:'Start a New Pot?',body:'<p>All tickets and draws in this pot will be cleared.</p>',buttons:[{label:'Cancel',value:false},{label:'Start New Pot',value:true,danger:true}]}))return;
+    const carry=rem>0&&await dialog({title:'Carry Over the Leftover Money?',body:`<p>There's <b>${fmt(rem)}</b> left in this pot. Add it to the new pot as carried-over money?</p>`,buttons:[{label:'No',value:false},{label:'Yes',value:true,primary:true}]});
     BR.tickets={};BR.history=[];BR.out=[];BR.slices=[];BR.balls=10;BR.rmMode='one';BR.added=carry?rem:0;brSave();paint();};
   function brHistoryOrPot(){return brRemaining();}
   q('#brSpin').onclick=()=>spin(10+brRandInt(80)/10);
