@@ -11,7 +11,7 @@
 <!-- Built-in broadcast database. Filled in automatically when you download the hosted copy from the Broadcast setup,
      so people you share the app with can broadcast with one click instead of creating their own database. -->
 <meta name="pb-default-db" content="https://pool-bracket-aabd0-default-rtdb.firebaseio.com">
-<meta name="pb-version" content="2026.11.10.26">
+<meta name="pb-version" content="2026.11.10.27">
 <meta name="pb-owner" content="8a2c855b843601999226f70301194399cf759b8bc62fd838119026ce0ceb3161">
 <meta name="pb-default-host" content="https://cgammons01-sys.github.io/pool-bracket/">
 <link rel="manifest" id="manifest">
@@ -170,7 +170,8 @@ body.board #verTag,body.viewer #verTag{display:none}
 .brlist::-webkit-scrollbar,.brov::-webkit-scrollbar{width:5px}.brlist::-webkit-scrollbar-thumb,.brov::-webkit-scrollbar-thumb{background:#3a4d41;border-radius:3px}.brlist::-webkit-scrollbar-track,.brov::-webkit-scrollbar-track{background:transparent}
 .brrow{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line)}.brrow:last-child{border-bottom:0}
 .brrow .sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px}.brrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.brrow button{padding:2px 10px;font-size:15px;line-height:1.2}.brrow input{width:52px;text-align:center;padding:3px}
+.brrow button{padding:2px 10px;font-size:15px;line-height:1.2}.brrow .lk{padding:2px 7px;font-size:14px;opacity:1}
+.brrow input:disabled{opacity:.45}.brrow.open{background:#2a2a17;box-shadow:inset 3px 0 0 var(--gold)}.brrow.open .lk{border-color:var(--gold)}.brrow input{width:52px;text-align:center;padding:3px}
 .brrow .amt{min-width:52px;text-align:right;color:#7fc49a;font-variant-numeric:tabular-nums}.brrow .x{padding:2px 7px;font-size:12px;color:var(--muted)}
 .brrow.out .nm{color:var(--muted)}
 .brchk{flex-direction:row;align-items:center;gap:6px;color:var(--text);font-size:13px}
@@ -1373,7 +1374,7 @@ function openBreakRun(){
     <div class="row" style="margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)"><button type="button" id="brNewPot" class="danger">New Pot…</button></div></div>`;
   document.body.appendChild(ov);
   const q=s=>ov.querySelector(s);
-  const cv=q('#brCanvas'),ctx=cv.getContext('2d');let spinning=false,size=0;
+  const cv=q('#brCanvas'),ctx=cv.getContext('2d');let spinning=false,size=0;let BR_OPEN=null,BR_T=null;
   function sizeCanvas(){const box=q('.brwheel');size=Math.max(220,Math.min(560,box.clientWidth));const d=window.devicePixelRatio||1;
     cv.width=size*d;cv.height=size*d;cv.style.width=size+'px';cv.style.height=size+'px';ctx.setTransform(d,0,0,d,0,0);drawWheel();}
   function sliceAt(rot){const N=BR.slices.length;if(!N)return -1;const seg=2*Math.PI/N;let a=(-Math.PI/2-rot)%(2*Math.PI);if(a<0)a+=2*Math.PI;return Math.floor(a/seg)%N;}
@@ -1400,7 +1401,7 @@ function openBreakRun(){
     const want=-Math.PI/2-(t+f)*seg,two=2*Math.PI;let delta=((want-BR.rot)%two+two)%two;if(dir<0)delta=delta-two;
     const from=BR.rot,to=from+dir*turns*two+delta,t0=performance.now();
     (function frame(now){const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);BR.rot=from+(to-from)*e;drawWheel();
-      if(p<1)requestAnimationFrame(frame);else{BR.rot=((BR.rot%two)+two)%two;spinning=false;setBusy(false);brSave();landed(BR.slices[t]);}})(t0);
+      if(p<1)requestAnimationFrame(frame);else{BR.rot=((BR.rot%two)+two)%two;spinning=false;setBusy(false);brApplyLocks();brSave();landed(BR.slices[t]);}})(t0);
   }
   function setBusy(b){['#brSpin','#brPrice','#brAdded','#brBalls','#brAddAll','#brNewPot','#brPick'].forEach(s=>{const e=q(s);if(e)e.disabled=b;});ov.querySelectorAll('.brlist button,.brlist input').forEach(e=>e.disabled=b);}
   function landed(name){
@@ -1422,25 +1423,34 @@ function openBreakRun(){
     q('#brVals').innerHTML=!pot?'<span class="hint">Set a ticket price and add tickets.</span>':!rem?'<span class="hint">The pot has been paid out.</span>':(paid?'Next Draw: ':'')+`<b>${fmt(vals[0])}</b> Per Ball`+(vals[BR.balls-1]!==vals[0]?` · Last Ball (${BR.balls}) <b>${fmt(vals[BR.balls-1])}</b>`:'')+` · Full Run <b>${fmt(rem)}</b>`;
     const col=brColors(),names=Object.keys(BR.tickets).sort((a,b)=>a.localeCompare(b));
     q('#brList').innerHTML=names.length?names.map(n=>{const c=+BR.tickets[n]||0,gone=Math.min(c,used[n]||0),out=c>0&&gone>=c,tag=used[n]===Infinity?'Drawn':gone?(out?'All Used':gone+' Used'):'';
-      return `<div class="brrow${out?' out':''}"><span class="sw" style="background:${col[n]}"></span><span class="nm">${esc(n)}${tag?` <span class="hint">(${tag})</span>`:''}</span>
-        <button type="button" data-n="${esc(n)}" data-d="-1">−</button><input type="number" min="0" value="${c}" data-n="${esc(n)}"><button type="button" data-n="${esc(n)}" data-d="1">+</button>
+      const op=BR_OPEN===n;return `<div class="brrow${out?' out':''}${op?' open':''}"><span class="sw" style="background:${col[n]}"></span><span class="nm">${esc(n)}${tag?` <span class="hint">(${tag})</span>`:''}</span>
+        <button type="button" class="lk" data-n="${esc(n)}" data-lk="1" title="${op?'Lock':'Unlock to change'} ${esc(n)}'s tickets">${op?'🔓':'🔒'}</button><button type="button" data-n="${esc(n)}" data-d="-1">−</button><input type="number" min="0" value="${c}" data-n="${esc(n)}"><button type="button" data-n="${esc(n)}" data-d="1">+</button>
         <span class="amt">${fmt(c*(+BR.price||0))}</span><button type="button" class="x" data-n="${esc(n)}" data-x="1" title="Remove">✕</button></div>`;}).join(''):'<p class="hint">No tickets yet. Add names below, or add everyone in the tournament.</p>';
-    q('#brList').querySelectorAll('button[data-d]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;BR.tickets[n]=Math.max(0,(+BR.tickets[n]||0)+(+b.dataset.d));changed();});
-    q('#brList').querySelectorAll('input[data-n]').forEach(i=>i.onchange=()=>{BR.tickets[i.dataset.n]=Math.max(0,Math.round(+i.value||0));changed();});
-    q('#brList').querySelectorAll('button[data-x]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;if((+BR.tickets[n]||0)&&!confirm(`Remove ${n} and their ${BR.tickets[n]} ticket(s)?`))return;delete BR.tickets[n];BR.out=BR.out.filter(x=>x!==n);changed();});
+    q('#brList').querySelectorAll('button[data-d]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;if(BR_OPEN!==n)return;brArm();BR.tickets[n]=Math.max(0,(+BR.tickets[n]||0)+(+b.dataset.d));changed();});
+    q('#brList').querySelectorAll('button[data-lk]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;if(BR_OPEN===n){brLock();return;}BR_OPEN=n;brArm();paint();});
+    q('#brList').querySelectorAll('input[data-n]').forEach(i=>i.addEventListener('input',()=>{if(BR_OPEN===i.dataset.n)brArm();}));
+    q('#brList').querySelectorAll('input[data-n]').forEach(i=>i.onchange=()=>{if(BR_OPEN!==i.dataset.n)return;brArm();BR.tickets[i.dataset.n]=Math.max(0,Math.round(+i.value||0));changed();});
+    q('#brList').querySelectorAll('button[data-x]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;if(BR_OPEN!==n)return;if((+BR.tickets[n]||0)&&!confirm(`Remove ${n} and their ${BR.tickets[n]} ticket(s)?`))return;delete BR.tickets[n];BR.out=BR.out.filter(x=>x!==n);changed();});
+    brApplyLocks();
     const src=brSourceNames();q('#brPick').innerHTML=`<option value="">${src.length?'Choose a Player…':'No Players on the List Yet'}</option>`+src.map(n=>{const c=+BR.tickets[n]||0;return `<option value="${esc(n)}">${esc(n)}${c?` (${c} Ticket${c===1?'':'s'})`:''}</option>`;}).join('');
     q('#brHist').innerHTML=BR.history.length?BR.history.map((h,i)=>`<div class="brh"><span>Draw ${i+1}</span><b>${esc(h.name)}</b><span>${h.balls===h.of?'Ran the Rack':h.balls+' Ball'+(h.balls===1?'':'s')}</span><span class="amt">${fmt(h.paid)}</span></div>`).join('')+`<div class="row" style="margin-top:6px"><button type="button" id="brUndo">↶ Undo Last Draw</button></div>`:'<p class="hint">No Draws Yet</p>';
     const u=q('#brUndo');if(u)u.onclick=()=>{const h=BR.history.pop();if(h)BR.out=BR.out.filter(x=>x!==h.name);brBuildSlices();brSave();paint();};
-    q('#brSpin').disabled=!BR.slices.length;
+    q('#brSpin').disabled=spinning||!BR.slices.length;
     drawWheel();
   }
   function changed(){brBuildSlices();brSave();paint();}
+  // Ticket rows are locked so a stray tap can't change a count: 🔒 opens one row at a time, and it relocks
+  // by itself 3 seconds after the last change
+  function brArm(){clearTimeout(BR_T);BR_T=setTimeout(brLock,3000);}
+  function brLock(){clearTimeout(BR_T);if(BR_OPEN===null)return;if(spinning){BR_OPEN=null;ov.querySelectorAll('.brrow.open').forEach(r=>{r.classList.remove('open');const l=r.querySelector('[data-lk]');if(l)l.textContent='🔒';});return;}const a=document.activeElement;if(a&&a.matches&&a.matches('.brlist input'))a.blur();BR_OPEN=null;paint();}
+  function brApplyLocks(){ov.querySelectorAll('.brrow').forEach(row=>{const lk=row.querySelector('[data-lk]');if(!lk)return;const open=BR_OPEN===lk.dataset.n;
+    row.querySelectorAll('button[data-d],input[data-n],button[data-x]').forEach(e=>e.disabled=spinning||!open);lk.disabled=spinning;});}
   q('#brBalls').onchange=e=>{BR.balls=+e.target.value;brSave();paint();};
   q('#brPrice').onchange=e=>{BR.price=Math.max(0,+e.target.value||0);brSave();paint();};
   q('#brAdded').onchange=e=>{BR.added=Math.max(0,+e.target.value||0);brSave();paint();};
   q('#brRm').onchange=e=>{BR.rmMode=e.target.value;changed();};
   const addName=n=>{n=(n||'').trim();if(!n)return;if(!(n in BR.tickets))BR.tickets[n]=0;};
-  q('#brPick').onchange=e=>{const n=e.target.value;if(!n)return;addName(n);BR.tickets[n]=(+BR.tickets[n]||0)+1;changed();};
+  q('#brPick').onchange=e=>{const n=e.target.value;if(!n)return;addName(n);BR.tickets[n]=(+BR.tickets[n]||0)+1;BR_OPEN=n;brArm();changed();};
   q('#brAddAll').onclick=()=>{const src=brSourceNames();if(!src.length){alert('Add players to the tournament first.');return;}src.forEach(addName);changed();};
   q('#brNewPot').onclick=()=>{const rem=brHistoryOrPot();
     if(!confirm('Start a new Break & Run pot? Tickets and draws will be cleared.'))return;
@@ -1448,7 +1458,7 @@ function openBreakRun(){
     BR.tickets={};BR.history=[];BR.out=[];BR.slices=[];BR.balls=10;BR.rmMode='one';BR.added=carry?rem:0;brSave();paint();};
   function brHistoryOrPot(){return brRemaining();}
   q('#brSpin').onclick=()=>spin(10+brRandInt(80)/10);
-  q('#brClose').onclick=()=>{if(spinning)return;ov.remove();window.removeEventListener('resize',sizeCanvas);};
+  q('#brClose').onclick=()=>{if(spinning)return;clearTimeout(BR_T);ov.remove();window.removeEventListener('resize',sizeCanvas);};
   // Grab and flick: the wheel follows your finger; letting go fast spins it, letting go slowly just leaves it there
   let drag=null;
   const ang=e=>{const r=cv.getBoundingClientRect();return Math.atan2(e.clientY-r.top-r.height/2,e.clientX-r.left-r.width/2);};
