@@ -11,7 +11,7 @@
 <!-- Built-in broadcast database. Filled in automatically when you download the hosted copy from the Broadcast setup,
      so people you share the app with can broadcast with one click instead of creating their own database. -->
 <meta name="pb-default-db" content="https://pool-bracket-aabd0-default-rtdb.firebaseio.com">
-<meta name="pb-version" content="2026.11.10.27">
+<meta name="pb-version" content="2026.11.10.28">
 <meta name="pb-owner" content="8a2c855b843601999226f70301194399cf759b8bc62fd838119026ce0ceb3161">
 <meta name="pb-default-host" content="https://cgammons01-sys.github.io/pool-bracket/">
 <link rel="manifest" id="manifest">
@@ -1440,8 +1440,8 @@ function openBreakRun(){
   }
   function changed(){brBuildSlices();brSave();paint();}
   // Ticket rows are locked so a stray tap can't change a count: 🔒 opens one row at a time, and it relocks
-  // by itself 3 seconds after the last change
-  function brArm(){clearTimeout(BR_T);BR_T=setTimeout(brLock,3000);}
+  // by itself 2 seconds after the last change
+  function brArm(){clearTimeout(BR_T);BR_T=setTimeout(brLock,2000);}
   function brLock(){clearTimeout(BR_T);if(BR_OPEN===null)return;if(spinning){BR_OPEN=null;ov.querySelectorAll('.brrow.open').forEach(r=>{r.classList.remove('open');const l=r.querySelector('[data-lk]');if(l)l.textContent='🔒';});return;}const a=document.activeElement;if(a&&a.matches&&a.matches('.brlist input'))a.blur();BR_OPEN=null;paint();}
   function brApplyLocks(){ov.querySelectorAll('.brrow').forEach(row=>{const lk=row.querySelector('[data-lk]');if(!lk)return;const open=BR_OPEN===lk.dataset.n;
     row.querySelectorAll('button[data-d],input[data-n],button[data-x]').forEach(e=>e.disabled=spinning||!open);lk.disabled=spinning;});}
