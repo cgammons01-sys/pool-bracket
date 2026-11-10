@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pool Bracket</title>
+<meta name="theme-color" content="#0f1512">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Built-in broadcast database. Filled in automatically when you download the hosted copy from the Broadcast setup,
+     so people you share the app with can broadcast with one click instead of creating their own database. -->
+<meta name="pb-default-db" content="https://pool-bracket-aabd0-default-rtdb.firebaseio.com">
+<meta name="pb-version" content="2026.11.10.25">
+<meta name="pb-owner" content="8a2c855b843601999226f70301194399cf759b8bc62fd838119026ce0ceb3161">
+<meta name="pb-default-host" content="https://cgammons01-sys.github.io/pool-bracket/">
+<link rel="manifest" id="manifest">
+<link rel="apple-touch-icon" id="appleIcon">
+<link rel="icon" id="favIcon">
+<style>
+:root{--bg:#0f1512;--panel:#17201b;--card:#1e2a23;--line:#2c3b32;--text:#e8efe9;--muted:#8fa396;--felt:#1f7a4a;--gold:#e0b35a;--red:#c9574f;--blue:#4f8fd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Segoe UI,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;letter-spacing:.5px}
+header h1 span{color:var(--gold)}
+.sub{color:var(--muted);font-size:13px}
+.spacer{flex:1}
+button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font:inherit}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--felt);border-color:var(--felt);font-weight:600}
+button.danger{border-color:var(--red);color:#f3b3ae}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,select,textarea{background:#0c110e;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+input[type=number]{width:90px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+main{padding:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.panel h2{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+textarea{width:100%;min-height:260px;resize:vertical}
+/* Player roster: one row per player with a Paid box and a remove button */
+.rs-add{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.rs-add input{flex:1;min-width:160px}
+.rs-head,.rs-row{display:grid;grid-template-columns:28px minmax(0,1fr) 46px 34px;gap:6px;align-items:center}
+.rs-head{padding:0 8px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}.rs-head span:nth-child(3){text-align:center}
+.rs-list{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:8px;scrollbar-width:thin;scrollbar-color:#3a4d41 transparent}
+.rs-list::-webkit-scrollbar{width:5px}.rs-list::-webkit-scrollbar-thumb{background:#3a4d41;border-radius:3px}.rs-list::-webkit-scrollbar-track{background:transparent}
+.rs-row{padding:3px 8px;border-bottom:1px solid var(--line);transition:background .15s}.rs-row:last-child{border-bottom:0}
+.rs-row .rs-n{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.rs-row .rs-name{background:transparent;border:1px solid transparent;padding:4px 6px;width:100%}
+.rs-row .rs-name:hover,.rs-row .rs-name:focus{border-color:var(--line);background:#0c110e}
+.rs-row .rs-paid{flex-direction:row;align-items:center;justify-content:center;cursor:pointer;height:100%}
+.rs-row .rs-paid input{width:18px;height:18px;accent-color:#2ecc71;cursor:pointer;margin:0}
+.rs-row .rs-x{padding:2px 8px;color:var(--muted);font-size:13px}.rs-row .rs-x:hover{color:#f3b3ae;border-color:var(--red)}
+.rs-row.paid{background:#1d4a31}.rs-row.paid .rs-name{color:#fff;font-weight:600}.rs-row.paid .rs-n{color:#9fe0b6}
+.rs-empty{padding:12px;margin:0}
+.rs-demo{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.rs-demo summary{cursor:pointer;color:var(--muted);font-size:13px;user-select:none}.rs-demo summary:hover{color:var(--text)}.rs-demo[open] summary{color:var(--gold);margin-bottom:6px}
+.rs-row.unpaid{background:#4a2320;box-shadow:inset 3px 0 0 var(--red)}
+.rs-undo{font-size:13px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rs-undo button{padding:2px 10px;font-size:13px}
+#paidcount b{color:#7fc49a}#paidcount i{font-style:normal;color:var(--gold)}
+.bracket{overflow-x:auto;padding-bottom:8px}
+.rounds{display:flex;gap:28px;align-items:stretch;position:relative;width:max-content;min-width:100%}
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.wires path{fill:none;stroke:#6b8a76;stroke-width:1.75}
+.wires path.reset{stroke-dasharray:4 4}
+.round{position:relative;z-index:1}
+.round{display:flex;flex-direction:column;min-width:190px}
+.round h3{margin:0 0 8px;font-size:12px;color:var(--muted);font-weight:600;text-align:center;white-space:nowrap}
+.round .col{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
+.match{background:var(--card);border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:13px;display:flex}
+.match .body{flex:1;min-width:0}
+.match .num{width:36px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);background:#162019;color:var(--gold);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.match .num.click{cursor:pointer}
+.match .num.click:not(.on):hover{background:#23352a}
+.match .num.on.click:hover{background:#3ddc82}
+.match .num.on{background:#2ecc71;color:#06220f}
+.match .num.done{background:#1b3a28;color:#7fc49a}
+.match.next{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(224,179,90,.55);border-color:var(--gold)}
+.match .mh{display:flex;justify-content:space-between;padding:2px 8px;font-size:10px;color:var(--muted);background:#162019;border-bottom:1px solid var(--line)}
+.p{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line);min-height:28px}
+.p:last-child{border-bottom:0}
+.p .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p .seed{color:var(--muted);font-size:10px;min-width:16px}
+.p .seed.sl{color:#1a1200;background:var(--gold);border-radius:3px;padding:0 3px;font-weight:700;font-size:9px;min-width:0;line-height:13px}
+body.showall .p .seed.sl{display:inline!important}
+.p.live{cursor:pointer}
+.p.live:hover{background:#27392e}
+.p.win{background:#1b3a28;font-weight:600}
+.p.win .n::after{content:" ✓";color:var(--gold)}
+.p.lose{color:var(--muted);text-decoration:line-through}
+.p.bye{color:var(--muted);font-style:italic}
+.p.tbd{color:#5f6f65;font-style:italic}
+.p.cond{border-left:3px solid var(--blue)}
+.mh .lt{color:var(--gold);font-weight:600;margin-left:4px}
+.mh .cash{color:#06220f;background:#2ecc71;font-weight:700;margin-left:4px;padding:0 4px;border-radius:3px;white-space:nowrap}
+@media print{.mh .cash{background:#cfe8d6!important;color:#000!important}}
+.p.tbd .n{font-size:.85em}
+.mh .reset{padding:0 5px;margin-left:6px;font-size:11px;line-height:14px;border-radius:4px;color:var(--gold);border-color:#3a4a40;background:transparent}
+.mh .reset:hover{background:var(--red);color:#fff;border-color:var(--red)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:12px;font-weight:600}
+td input{width:70px}
+.money{font-variant-numeric:tabular-nums;text-align:right}
+.big{font-size:22px;font-weight:700;color:var(--gold)}
+/* payout editor (setup + edit dialog) */
+.pe .row{margin-bottom:10px}
+.pe .pe-hint{align-self:center;color:var(--muted);font-size:12px}
+.pe .pe-custom{background:#121915;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:2px 0 10px}
+.pe .pe-custom h4{margin:0 0 8px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.pe .pe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 18px}
+.pe .pe-grid label span{white-space:nowrap}
+.pe .pe-grid label{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;color:var(--text);font-size:13px}
+.pe .pe-grid input{width:76px}
+.pe .pe-total{margin-top:8px;font-size:13px}
+.pe .pe-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:13px}
+.pe .pe-preview span{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:2px 10px;white-space:nowrap}
+.pe .pe-preview span b{color:#7fc49a}
+.pe .pe-preview .pot{border-color:var(--gold);color:var(--gold)}
+.pe .ok{color:#7fc49a}.pe .bad{color:#f3b3ae}
+.paysum{display:flex;gap:14px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:-2px 0 10px}
+.paysum a{color:var(--gold);text-decoration:none;font-weight:600}.paysum a:hover{text-decoration:underline}
+.potrow{gap:22px;color:var(--muted)}.potrow b{color:var(--text)}
+.paytable td .tie{color:var(--muted);font-size:12px}
+.paytable{max-width:720px}
+.queue{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.queue .ql{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:4px}
+.queue .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 6px;cursor:pointer;font-size:13px;color:var(--text)}
+.queue .chip:hover{background:#27392e}
+.queue .chip b{background:var(--gold);color:#1a1200;border-radius:12px;padding:0 7px;font-size:12px}
+.queue .chip.on{border-color:#2ecc71;cursor:default}
+.queue .chip.on b{background:#2ecc71;color:#06220f}
+.queue .chip.on:hover{background:var(--card)}
+.queue .wait{font-size:12px;color:var(--muted);margin-left:auto}
+.champ{background:linear-gradient(90deg,#2a3d1e,#17201b);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:16px}
+.err{color:#f3b3ae;font-size:13px}
+.hint{color:var(--muted);font-size:12px}
+.stand{columns:2;font-size:13px}
+.stand div{break-inside:avoid;padding:2px 0}
+.stand b{color:var(--gold);display:inline-block;min-width:48px}
+/* Viewer (broadcast) mode: read-only */
+body.viewer .tdonly,body.viewer .reset,body.viewer #p_recnote{display:none!important}
+body.viewer .p.live,body.viewer .num.click,body.viewer .queue .chip{cursor:default}
+body.viewer .p.live:hover{background:transparent}
+body.viewer .queue .chip:hover{background:var(--card)}
+/* Broadcast button shows the live state at a glance */
+#updBtn{background:var(--gold);border-color:var(--gold);color:#1a1200;font-weight:700}
+#verTag{position:fixed;right:10px;bottom:6px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 8px;z-index:4;user-select:none;-webkit-user-select:none}
+body.board #verTag,body.viewer #verTag{display:none}
+#bcBtn.live{background:#2ecc71;border-color:#2ecc71;color:#06220f;font-weight:700}
+#bcBtn.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#06220f;margin-right:6px;animation:bcpulse 1.4s ease-in-out infinite}
+#bcBtn.wait{background:#5a4a1e;border-color:var(--gold);color:var(--gold)}
+#bcBtn.err{background:#4a2320;border-color:var(--red);color:#f3b3ae}
+@keyframes bcpulse{0%,100%{opacity:1}50%{opacity:.25}}
+#bcStatus b{color:#2ecc71}
+#bcStatus.err b{color:var(--red)}
+#bcStatus.wait b{color:var(--gold)}
+/* Break & Run pot */
+.brov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:55;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto}
+.brbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:100%;max-width:1220px;padding:14px 18px 18px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.brhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}.brhead h3{margin:0;font-size:19px}.brhead .sub b{color:var(--gold)}
+.brgrid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(300px,1.15fr);gap:20px;align-items:start}
+@media (max-width:820px){.brgrid{grid-template-columns:1fr}.brright{order:-1}}
+.brleft h4{margin:14px 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.brvals{font-size:14px;color:var(--muted)}.brvals b{color:#7fc49a}
+.brlist{max-height:42vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.brlist,.brov{scrollbar-width:thin;scrollbar-color:#3a4d41 transparent}
+.brlist::-webkit-scrollbar,.brov::-webkit-scrollbar{width:5px}.brlist::-webkit-scrollbar-thumb,.brov::-webkit-scrollbar-thumb{background:#3a4d41;border-radius:3px}.brlist::-webkit-scrollbar-track,.brov::-webkit-scrollbar-track{background:transparent}
+.brrow{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line)}.brrow:last-child{border-bottom:0}
+.brrow .sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px}.brrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brrow button{padding:2px 10px;font-size:15px;line-height:1.2}.brrow input{width:52px;text-align:center;padding:3px}
+.brrow .amt{min-width:52px;text-align:right;color:#7fc49a;font-variant-numeric:tabular-nums}.brrow .x{padding:2px 7px;font-size:12px;color:var(--muted)}
+.brrow.out .nm{color:var(--muted)}
+.brchk{flex-direction:row;align-items:center;gap:6px;color:var(--text);font-size:13px}
+.brhist .brh{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid #1e2a23;font-size:14px}.brhist .brh span:first-child{color:var(--muted);min-width:52px}.brhist .brh b{flex:1}.brhist .amt{color:#7fc49a}
+.brright{display:flex;flex-direction:column;align-items:stretch}
+.brwheel{position:relative;width:100%;max-width:560px;margin:0 auto;display:flex;justify-content:center}
+.brwheel canvas{touch-action:none;cursor:grab;display:block}.brwheel canvas:active{cursor:grabbing}
+.brptr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid #fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.brnow{text-align:center;font-size:20px;font-weight:700;color:var(--gold);margin:8px 0;min-height:28px}
+.brwin{margin-top:12px;border:1px solid var(--gold);border-radius:10px;padding:12px;background:#1d2618;text-align:center}
+.brwname{font-size:26px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.brballs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.brballs button{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:6px 8px;font-weight:700;font-size:16px}
+.brballs button small{font-weight:500;font-size:11px;color:#7fc49a}
+/* in-page dialogs */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;max-width:680px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);font-size:14px}
+.dlg h3{margin:0 0 12px;font-size:18px}
+.dlg h4{margin:16px 0 6px;font-size:14px;color:var(--gold);text-transform:uppercase;letter-spacing:.5px}
+.dlg p,.dlg li{color:var(--text);line-height:1.5}
+.dlg ol{padding-left:22px;margin:6px 0}
+.dlg li{margin:4px 0}
+.dlg .muted{color:var(--muted)}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.dlg input[type=text],.dlg input[type=url]{width:100%;font:13px/1.3 ui-monospace,Consolas,monospace}
+.dlg pre{background:#0c110e;border:1px solid var(--line);border-radius:6px;padding:10px;font:12px/1.4 ui-monospace,Consolas,monospace;overflow:auto;margin:6px 0}
+.dlg .ok{color:#2ecc71}.dlg .bad{color:#f3b3ae}
+.dlg .step{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--card)}
+.dlg .step.done{border-color:#2ecc71}
+.dlg .step .tag{float:right;font-size:12px;color:var(--muted)}
+.dlg .step.done .tag{color:#2ecc71}
+.dlg .link{display:flex;gap:8px;align-items:center}
+.dlg .link input{flex:1}
+.dlg img.qr{display:block;margin:10px auto;background:#fff;padding:8px;border-radius:8px}
+/* Board mode: brackets only, full screen */
+body.board header,body.board #queue,body.board #bottom,body.board #pipanel{display:none!important}
+body.board main{padding:8px}
+body.board #brackets{margin-bottom:0}
+body.board .match{font-size:calc(var(--fs,12px) + 1px)}
+body.board .round h3{font-size:12px}
+#boardExit{display:none;position:fixed;top:10px;right:14px;z-index:20;opacity:.55;background:var(--panel)}
+body.board #boardExit{display:inline-block}
+#boardExit:hover{opacity:1}
+/* Board-mode info cards, placed in the empty corners next to the single-game final columns */
+.ov{display:none}
+body.board #brackets>.panel{position:relative}
+body.board .ov{display:block;position:absolute;right:12px;width:calc(2*var(--colw,170px) + var(--gap,12px));max-height:calc(50% - var(--unit,92px)/2 - 84px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3a4d41 transparent;background:#131a16;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:var(--fs,12px);z-index:2;line-height:1.3}
+body.board .ov.tr{top:74px}
+body.board .ov.br{bottom:12px}
+.ov h4{margin:0 0 5px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ov h4 .pot{color:var(--gold);font-size:12px;letter-spacing:0}
+.ov .r{display:flex;gap:8px;padding:1px 0;border-bottom:1px solid #1e2a23;white-space:nowrap}
+.ov .r:last-child{border-bottom:0}
+.ov .r .pl{color:var(--muted);min-width:4.2em}
+.ov .r .amt{color:#7fc49a;font-weight:600;min-width:3.5em;text-align:right}
+.ov .r .who{flex:1;overflow:hidden;text-overflow:ellipsis}
+.ov .r .who.tbd{color:#5f6f65;font-style:italic}
+.ov .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--gold);border-radius:14px;padding:1px 8px 1px 4px;margin:2px 3px 2px 0;white-space:nowrap;max-width:100%;overflow:hidden}
+.ov .chip b{background:var(--gold);color:#1a1200;border-radius:10px;padding:0 6px;font-size:.9em}
+.ov .chip.on{border-color:#2ecc71}.ov .chip.on b{background:#2ecc71;color:#06220f}
+.ov .none{color:var(--muted);font-style:italic}
+.ov::-webkit-scrollbar{width:5px}.ov::-webkit-scrollbar-thumb{background:#3a4d41;border-radius:3px}.ov::-webkit-scrollbar-track{background:transparent}
+.ov .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15em),1fr));gap:3px 6px;margin-bottom:2px}
+.ov .chips .chip{margin:0;min-width:0}
+.ov .chip .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+body.board:not(.compact) .ov .chips{display:block;margin:0}
+body.board:not(.compact) .ov .chips .chip{display:flex;border:0;border-bottom:1px solid #1e2a23;border-radius:0;padding:1px 0;gap:6px;max-width:none}
+body.board:not(.compact) .ov .chips .chip:last-child{border-bottom:0}
+body.board:not(.compact) .ov .chips .chip b{min-width:2.1em;text-align:center;padding:0 4px;line-height:1.35}
+body.viewer #boardExit,body.viewer #viewToggle,body.viewer #boardBtn{display:none!important}
+/* Board on phones / tablets in portrait: one bracket at a time with tabs, readable card sizes, scroll instead of shrink */
+#cmpBar,#cmpTop,#cmpBottom{display:none}
+body.board.compact #cmpBar{display:flex;position:sticky;top:0;z-index:6;gap:6px;align-items:center;background:var(--bg);padding:6px 0 8px;margin:-8px 0 6px}
+#cmpBar .tab{flex:1;padding:10px 6px;font-size:15px;font-weight:700;border-radius:8px;background:var(--panel);color:var(--muted)}
+#cmpBar .tab.on{background:var(--felt);border-color:var(--felt);color:#fff}
+#cmpBar .tab b{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:9px;background:var(--gold);color:#1a1200;font-size:12px}
+#cmpBar .x{flex:0 0 auto;padding:10px 12px}
+body.viewer #cmpBar .x{display:none}
+body.board.compact #cmpTop,body.board.compact #cmpBottom{display:block}
+body.board.compact #cmpBottom{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+@media (min-width:640px){body.board.compact #cmpBottom{grid-template-columns:1fr 1fr}}
+body.board.compact #boardExit{display:none!important}
+body.board.compact #brackets{display:block!important}
+body.board.compact #brackets .divider{display:none!important}
+body.board.compact #brackets>.panel{border-radius:10px!important;border:1px solid var(--line)!important;padding:10px 8px}
+body.board.compact #brackets>.panel.off{display:none}
+body.board.compact #brackets>.panel>h2{display:none}
+body.board.compact .bracket{overflow-x:auto!important;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+body.board.compact .ov{display:block;position:static!important;width:auto!important;max-height:none!important;font-size:13px!important;padding:9px 11px}
+body.board.compact #cmpTop .ov{margin-bottom:8px}
+body.board.compact .ov .chip{font-size:13px;padding:2px 9px 2px 4px}
+body.board.compact #vbadge{display:none!important}
+/* single elimination: no losers side */
+body.fmt-single #brackets>.divider,body.fmt-single #brackets>.panel:last-child{display:none!important}
+body.fmt-single #cmpBar .tab[data-tab="L"]{display:none}
+body.showall.fmt-single #brackets>.panel:first-child{border-radius:10px;border-right:1px solid var(--line)}
+/* board, single / modified: payouts, standings and ready list stacked in a reserved column on the right */
+#sideCol{display:none}
+body.board:not(.compact) #sideCol{display:flex;flex-direction:column;gap:8px;position:absolute;top:74px;bottom:12px;right:12px;width:calc(2*var(--colw,170px) + var(--gap,12px));z-index:2}
+body.board:not(.compact) #sideCol .ov{position:static!important;width:auto!important;max-height:none!important;flex:0 1 auto;min-height:0}
+body.board:not(.compact) #sideCol #ovReady{flex:1 1 auto}
+#cmpStatus{display:none;font-size:13px;color:var(--muted);margin:0 2px 8px}
+body.viewer.board.compact #cmpStatus{display:block}
+#cmpStatus b{color:#2ecc71}#cmpStatus.err b{color:var(--red)}#cmpStatus.wait b{color:var(--gold)}
+#installBar{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:60;background:#17201b;border:1px solid var(--gold);border-radius:12px;padding:12px 14px;box-shadow:0 10px 40px rgba(0,0,0,.6);align-items:center;gap:12px;flex-wrap:wrap;font-size:14px}
+#installBar.show{display:flex}
+#installBar img{width:44px;height:44px;border-radius:10px;flex:0 0 44px}
+#installBar .t{flex:1;min-width:180px}
+#installBar .t b{display:block;font-size:15px}
+#installBar .t span{color:var(--muted);font-size:13px}
+#installBar button.primary{padding:8px 16px}
+#vbadge{display:none;position:fixed;left:12px;bottom:10px;z-index:20;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 9px;opacity:.9}
+body.viewer.board #vbadge{display:block}
+#vbadge b{color:#2ecc71}#vbadge.err b{color:var(--red)}#vbadge.wait b{color:var(--gold)}
+/* Show All: winners and losers side by side with a divider */
+#brackets .divider{display:none}
+body.showall #brackets{display:flex;align-items:stretch;gap:0;margin-bottom:16px}
+body.showall #brackets>.panel{flex:1 1 0;min-width:0;margin-bottom:0!important}
+body.showall #brackets>.panel:first-child{border-radius:10px 0 0 10px;border-right:0}
+body.showall #brackets>.panel:last-child{border-radius:0 10px 10px 0;border-left:0}
+body.showall #brackets .divider{display:block;width:4px;flex:0 0 4px;background:linear-gradient(180deg,var(--gold),#8a6a2a);box-shadow:0 0 10px rgba(224,179,90,.45)}
+body.showall #pipanel{display:none}
+body.showall .bracket{overflow:hidden}
+body.showall .rounds{gap:var(--gap,12px)}
+body.showall .round{min-width:0;width:var(--colw,170px);flex:0 0 var(--colw,170px)}
+body.showall .round h3{font-size:11px;margin-bottom:6px}
+body.showall .round .col{gap:var(--cgap,8px)}
+body.showall .match{font-size:var(--fs,12px)}
+body.showall .match .mh{padding:0 5px;font-size:9px;height:15px;line-height:14px;white-space:nowrap;overflow:hidden}
+body.showall .match .mh span{display:flex;align-items:center;gap:3px}
+body.showall .mh .reset{padding:0 3px;margin-left:2px;font-size:9px;line-height:10px;height:12px}
+body.showall .match .num{width:var(--numw,30px);font-size:var(--fs,12px)}
+body.showall .p{padding:0 5px;min-height:var(--rowh,24px);height:var(--rowh,24px);line-height:1.1;gap:4px}
+body.showall .p .seed{display:var(--seed,inline)}
+@media print{
+  header,.noprint{display:none!important}
+  body{background:#fff;color:#000}
+  .panel,.match,.p,.mh{background:#fff!important;color:#000!important;border-color:#999!important}
+  .p.win{background:#e8f3e8!important}
+  .match .num{background:#eee!important;color:#000!important;border-color:#999!important}
+  .match .num.on,.match .num.done{background:#cfe8d6!important}
+  .match.next{box-shadow:none;outline:2px solid #000}
+  .wires path{stroke:#888!important}
+  .bracket{overflow:visible}
+  .grid{display:block}
+  main{padding:0}
+  @page{size:landscape;margin:10mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎱 <span>POOL</span> BRACKET</h1>
+  <div class="sub" id="hdrsub">Double Elimination · 8-Ball / 9-Ball</div>
+  <span id="bcStatus" class="sub noprint" style="cursor:pointer" title="Broadcast status"></span>
+  <button id="updBtn" class="noprint" hidden title="A newer version of Pool Bracket is on the website. Tap to reload into it — your tournament and settings are kept.">⬆ Update Available</button>
+  <div class="spacer"></div>
+  <div id="tbar" class="noprint" hidden>
+    <button id="viewToggle" class="primary">⬌ Show All</button>
+    <button id="boardBtn" title="Brackets only, full screen (Esc to exit)">🖥 Board</button>
+    <button id="undo" class="tdonly">↶ Undo</button>
+    <button id="redraw" class="tdonly" title="Reshuffle the draw (only before any match is played)">🔀 Redraw</button>
+    <button id="bcBtn" class="tdonly" title="Put the live bracket on the internet for anyone with the link">📡 Broadcast</button>
+    <button id="brBtn" class="tdonly" title="Break & Run pot: ticket sales and the prize wheel">🎡 B&amp;R Pot</button>
+    <button id="export" class="tdonly">💾 Save File</button>
+    <button id="importBtn" class="tdonly">📂 Load File</button>
+    <button id="backups" class="tdonly" title="Restore an automatic backup">⟲ Backups</button>
+    <input type="file" id="importFile" accept=".json" hidden>
+    <button class="tdonly" onclick="window.print()">🖨 Print</button>
+    <button id="newT" class="danger tdonly">✖ New Tournament</button>
+  </div>
+</header>
+
+<button id="boardExit" class="noprint" title="Back to the full page (Esc)">✕ Exit Board View</button>
+<span id="verTag" class="noprint"></span>
+<main>
+<section id="setup">
+  <div class="grid">
+    <div class="panel">
+      <h2>Players</h2>
+      <p class="hint">3 to 64 players. Type a name and press Enter, or paste a whole list. For the skill-grouped draw, add the skill level after the name, e.g. <b>Chad 5</b>. Tick <b>Paid</b> when they pay; ✕ takes a no-show off the list.</p>
+      <div id="roster">
+        <div class="rs-add"><input id="rsNew" placeholder="Add a player — type a name, press Enter" autocomplete="off"><button type="button" id="rsAdd">Add</button><button type="button" id="rsText" title="Edit or paste the whole list as plain text, one name per line">Edit as Text</button></div>
+        <div class="rs-head"><span>#</span><span>Player</span><span>Paid</span><span></span></div>
+        <div id="rsList" class="rs-list"></div>
+        <div id="rsUndo" class="rs-undo"></div>
+      </div>
+      <div id="rsTextWrap" hidden>
+        <textarea id="names" placeholder="One name per line&#10;(optional skill level after the name, e.g.  Mike 4)"></textarea>
+        <div class="row" style="margin-top:6px"><button type="button" class="primary" id="rsDone">Done</button><span class="hint">Paid ticks are kept for names that stay on the list.</span></div>
+      </div>
+      <p class="hint"><span id="pcount">0</span> players<span id="paidcount"></span></p>
+      <p class="hint" id="byehint"></p>
+      <div class="err" id="err"></div>
+      <details class="rs-demo" id="demoBox"><summary>🧪 Demo Tournament</summary>
+        <p class="hint">Fills the list with practice players, already marked Paid, so you can try the app without real names.</p>
+        <div class="row">
+          <label>Number of Players<input type="number" id="demoN" min="3" max="64" value="16"></label>
+          <label class="brchk"><input type="checkbox" id="demoSL"> Add Skill Levels</label>
+        </div>
+        <div class="row"><button type="button" id="demoNum">Numbered Players</button><button type="button" id="demoNames">Random Names</button></div>
+      </details>
+    </div>
+    <div class="panel">
+      <h2>Format</h2>
+      <div class="row">
+        <label>Game<select id="game"><option>8-Ball</option><option>9-Ball</option><option>10-Ball</option><option>Saratoga</option></select></label>
+        <label>Format<select id="fmtMode" title="Double: two losses to go out. Single: one loss and you're out. Modified single: if you lose your first match you get one second-chance match; after that, one loss and you're out."><option value="double">Double Elimination</option><option value="single">Single Elimination</option><option value="modified">Modified Single (2nd Chance After Rd 1)</option></select></label>
+        <label id="layoutWrap">Loser's Bracket Flow<select id="layoutMode" title="Classic Flow: laid out like a printed bracket sheet, straight lines across, numbered top to bottom. Crossover Flow: winners in the losers bracket are crossed to the far side so nobody replays an opponent until as late as possible, and match numbers follow the order games become ready."><option value="4" title="Laid out like a printed bracket sheet: straight lines across, numbered top to bottom.">Classic Flow</option><option value="2" title="Losers-bracket winners cross to the far side so nobody replays an opponent until as late as possible; match numbers follow the order games become ready.">Crossover Flow</option></select></label>
+        <label>Draw<select id="drawMode" title="Random: anyone can meet anyone in round 1. Group by skill: players are split into bands (1–3, 4–5, 6–9), drawn at random within each band, and placed so bands meet each other as late as the numbers allow. In the order listed: the 1st and 2nd names play the first match, 3rd and 4th the next, and so on down the bracket (bye spots are skipped)."><option value="random">Random</option><option value="listed">In the Order Listed</option><option value="skill">Group by APA Skill Levels (1–3 / 4–5 / 6–9)</option></select></label>
+      </div>
+      <div class="row">
+        <label>Winners Race To<input type="number" id="raceW" value="4" min="1"></label>
+        <label>Losers Race To<input type="number" id="raceL" value="3" min="1"></label>
+        <label>Finals Race To<input type="number" id="raceF" value="5" min="1"></label>
+      </div>
+      <div class="row">
+        <label>Tournament Name<input id="tname" placeholder="Sunday 9-Ball" style="width:220px"></label>
+        <label>Date<input type="date" id="tdate"></label>
+      </div>
+      <h2 style="margin-top:18px">Money</h2>
+      <div id="setupPay"></div>
+      <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="primary" id="start" style="font-size:16px;padding:10px 22px">Draw Bracket →</button>
+        <button id="brBtn2" title="Sell Break & Run tickets and spin the wheel">🎡 Break &amp; Run Pot</button>
+        <button id="importBtn2">📂 Load Saved Tournament</button><button id="backups2">⟲ Restore Backup</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="tourney" hidden>
+  <div id="queue" class="queue noprint"></div>
+  <div id="champ" class="champ" hidden></div>
+  <div class="panel" style="margin-bottom:16px" id="pipanel" hidden>
+    <h2>Play-In Round</h2>
+    <p class="hint">Winners enter the main bracket. Play-in losers are eliminated.</p>
+    <div class="bracket"><div class="rounds" id="pb"></div></div>
+  </div>
+  <div id="cmpBar"><button type="button" class="tab" data-tab="W">Winners</button><button type="button" class="tab" data-tab="L">Losers</button><button type="button" class="x" id="cmpExit" title="Leave board view">✕</button></div>
+  <div id="cmpTop"><div id="cmpStatus"></div></div>
+  <div id="brackets">
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Winners Bracket</h2>
+      <div class="bracket"><div class="rounds" id="wb"></div></div>
+      <div class="ov tr" id="ovPay"></div><div class="ov br" id="ovReady"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Losers Bracket</h2>
+      <div class="bracket"><div class="rounds" id="lb"></div></div>
+      <div class="ov tr" id="ovStand"></div>
+    </div>
+  </div>
+  <div id="cmpBottom"></div>
+  <div id="bottom">
+    <div class="panel">
+      <h2>Payouts</h2>
+      <div class="paysum"><span id="p_summary"></span><a href="#" id="payEdit" class="tdonly noprint">✎ Edit Payouts</a></div>
+      <div class="row potrow"><div>Players <b id="p_n"></b></div><div>Entries <b id="p_gross"></b></div><div>House <b id="p_house"></b></div><div>Pot <span class="big" id="p_pot"></span></div></div>
+      <table class="paytable"><thead><tr><th>Place</th><th class="money">%</th><th class="money">Pays</th><th>Player</th></tr></thead><tbody id="ptable"></tbody><tfoot><tr><td></td><td class="money" id="p_pct_total"></td><td class="money" id="p_amt_total"></td><td></td></tr></tfoot></table>
+      <h2 style="margin-top:18px">Standings</h2>
+      <div class="stand" id="standings"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY='poolbracket.v1';
+// Splits follow the usual pool-room shape: 1st about double 2nd, tied places (5-6, 7-8, 9-12, ...) paid equally.
+const PRESETS={1:[100],2:[65,35],3:[50,30,20],4:[40,30,20,10],5:[36,25,17,12,10],6:[40,24,14,10,6,6],8:[32,20,13,10,7.5,7.5,5,5],
+  12:[28,17,11,8,6.5,6.5,4.5,4.5,3.5,3.5,3.5,3.5],
+  16:[25,15,10,7,5.5,5.5,4,4,3,3,3,3,3,3,3,3],
+  24:[23,13,9,6,5,5,3.5,3.5,2.75,2.75,2.75,2.75,2.25,2.25,2.25,2.25,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5],
+  32:[20,12,8,5.5,4.5,4.5,3.25,3.25,2.5,2.5,2.5,2.5,2,2,2,2,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.125,1.125,1.125,1.125,1.125,1.125,1.125,1.125]};
+// Paying positions in double elimination (tied finishes share a tier). Standard practice: pay about 25% of the field,
+// rounded to the nearest tier (ties round up), never fewer than 2 places.
+const TIERS=[1,2,3,4,6,8,12,16,24,32];
+const FORMAT_NAMES={double:'Double Elimination',single:'Single Elimination',modified:'Modified Single Elimination'};
+function fmtOf(t){return (t&&t.format)||'double';}
+// Paying positions (tied finishes share a tier) differ by format: single elimination ties 3rd-4th, 5th-8th...;
+// modified single adds the round-2 losers, then the second-chance losers, as the last two tiers.
+function tiersFor(fmt,P){
+  if(fmt==='double')return TIERS;
+  let N=4;while(N<P)N*=2;const t=[1,2];for(let x=4;x<=(fmt==='modified'?N/2:N);x*=2)t.push(x);
+  if(fmt==='modified')t.push(3*N/4,N);
+  return t;
+}
+// The preset split for a number of places, with tied places levelled to the same share
+function presetFor(n,fmt,P){
+  const base=PRESETS[n].slice();if(fmt==='double')return base;
+  const out=[];let prev=0;
+  for(const t of tiersFor(fmt,P||64)){if(prev>=n)break;const end=Math.min(t,n),g=base.slice(prev,end),avg=g.reduce((a,b)=>a+b,0)/g.length;g.forEach(()=>out.push(Math.round(avg*1000)/1000));prev=end;}
+  return out;
+}
+function recommendPlaces(P,fmt){return placesFor(P,fmt,0.25);}
+// Places paid for "top X% of the field": nearest tie tier to P*X (ties round up), at least 2, never more than the field
+function placesFor(P,fmt,frac){
+  const tiers=tiersFor(fmt||'double',P).filter(t=>PRESETS[t]);
+  const x=P*frac;let best=tiers[0];
+  for(const t of tiers){if(t>P)break;if(Math.abs(t-x)<Math.abs(best-x)||(Math.abs(t-x)===Math.abs(best-x)&&t>best))best=t;}
+  return Math.max(2,Math.min(best,P));
+}
+function recText(P,fmt){const r=recommendPlaces(P,fmt);return `Standard for ${P} entries: pay ${r} place${r===1?'':'s'} (~25% of the field) — ${presetFor(r,fmt||'double',P).map(x=>+x.toFixed(2)).join('/')}`;}
+// Grey out place counts that would split a tie (e.g. paying 3 in single elimination, where 3rd and 4th tie)
+function syncPlaceOptions(sel,fmt,P){const ok=new Set(tiersFor(fmt,P));for(const o of sel.options)o.disabled=fmt!=='double'&&!ok.has(+o.value);
+  if(sel.selectedOptions[0]&&sel.selectedOptions[0].disabled){const v=[...sel.options].filter(o=>!o.disabled).map(o=>+o.value);sel.value=String(v.reduce((a,b)=>Math.abs(b-+sel.value)<=Math.abs(a-+sel.value)?b:a,v[0]));}}
+let T=null,M=null;
+
+/* ---------- bracket construction ---------- */
+function seedOrder(n){if(n===1)return[1];const p=seedOrder(n/2),o=[];for(const s of p)o.push(s,n+1-s);return o;}
+// How each winners-round's losers are shuffled before dropping into the losers bracket.
+// Chosen by simulation per bracket size to push any possible rematch as late as possible.
+const FEEDS={8:['rev','id'],16:['rev','halfrev','rev'],32:['rev','halfrev','rev','halfrev'],64:['rev','rot','halfrev','rot','rev']};
+const PERM={
+  id:a=>a,
+  rev:a=>a.slice().reverse(),
+  rot:a=>{const n=a.length/2;return a.slice(n).concat(a.slice(0,n));},
+  halfrev:a=>{const n=a.length/2;return a.slice(0,n).reverse().concat(a.slice(n).reverse());}
+};
+// Classic layout (layout 4): the printed-sheet way. Losers-side winners move straight across; the players dropping
+// from the winners side are placed by a fixed pattern (opposite half, straight, reversed, repeat), as on PrintYourBrackets.
+const CLASSIC=['rot','id','rev'];
+function classicFeed(arr,i){return PERM[CLASSIC[(i-2)%3]](arr);}
+function feed(arr,N,i){const t=FEEDS[N];const key=t?t[i-2]:(i%2===0?'rev':'id');return PERM[key||'rev'](arr);}
+function buildMatches(N,k,layout,fmt){
+  if(fmt==='single'||fmt==='modified')return buildSingle(N,fmt);
+  const R=Math.log2(N),W=[],L=[],all=[];let id=0;
+  const mk=(br,round,idx,label)=>{const m={id:'m'+(id++),br,round,idx,label,p1:null,p2:null,winner:null,wTo:null,lTo:null};all.push(m);return m;};
+  for(let r=1;r<=R;r++){W[r]=[];const c=N>>r;for(let i=0;i<c;i++)W[r].push(mk('W',r,i,`W${r}-${i+1}`));}
+  for(let r=1;r<R;r++)W[r].forEach((m,i)=>m.wTo=[W[r+1][i>>1].id,i&1]);
+  let lr=1;const LR1=[];for(let i=0;i<N/4;i++)LR1.push(mk('L',lr,i,`L${lr}-${i+1}`));L.push(LR1);
+  W[1].forEach((m,i)=>m.lTo=[LR1[i>>1].id,i&1]);
+  let prev=LR1;
+  for(let i=2;i<=R;i++){
+    lr++;const D=[];for(let j=0;j<prev.length;j++)D.push(mk('L',lr,j,`L${lr}-${j+1}`));L.push(D);
+    // Cross-feed so W-bracket losers don't meet the same opponent again until late. Same pairings either way;
+    // layout 2 crosses the losers-side survivors (already known) instead of the W losers, so each drop-round game
+    // lines up with the W game that feeds it and the games become ready in number order.
+    if(layout===4){const src=classicFeed(W[i].slice(),i);prev.forEach((m,j)=>m.wTo=[D[j].id,0]);src.forEach((m,j)=>m.lTo=[D[j].id,1]);}
+    else if((layout||1)>=2){const sp=feed(prev.slice(),N,i);sp.forEach((m,j)=>m.wTo=[D[j].id,0]);W[i].forEach((m,j)=>m.lTo=[D[j].id,1]);}
+    else{const src=feed(W[i].slice(),N,i);prev.forEach((m,j)=>m.wTo=[D[j].id,0]);src.forEach((m,j)=>m.lTo=[D[j].id,1]);}
+    prev=D;
+    if(i<R){lr++;const C=[];for(let j=0;j<D.length/2;j++)C.push(mk('L',lr,j,`L${lr}-${j+1}`));L.push(C);D.forEach((m,j)=>m.wTo=[C[j>>1].id,j&1]);prev=C;}
+  }
+  const GF1=mk('G',1,0,'Final'),GF2=mk('G',2,0,'Final — reset');
+  W[R][0].wTo=[GF1.id,0];prev[0].wTo=[GF1.id,1];
+  const PI=[];for(let i=0;i<(k||0);i++)PI.push(mk('P',0,i,`PI-${i+1}`));
+  // play order, used for match numbering
+  // (matches the PrintYourBrackets sheets: W1, L1, W2, drop, then each later winners round before the losers consolidation round it overlaps)
+  const order=[...PI,...W[1],...L[0],...W[2],...L[1]];
+  for(let i=3;i<=R;i++){order.push(...W[i]);order.push(...L[2*i-4]);order.push(...L[2*i-3]);}
+  order.push(GF1,GF2);
+  return{N,R,W,L,GF1,GF2,PI,all,order,byId:Object.fromEntries(all.map(m=>[m.id,m])),final:GF1,fmt:'double'};
+}
+// Single elimination: one loss and you're out.
+// Modified single: round-1 losers play each other once ("second chance"); those winners rejoin in round 3 against the
+// round-2 winners (crossed to the far half, so nobody meets the player who just beat them). Any later loss eliminates.
+function buildSingle(N,fmt){
+  const W=[],L=[],all=[];let id=0;
+  const mk=(br,round,idx,label)=>{const m={id:'m'+(id++),br,round,idx,label,p1:null,p2:null,winner:null,wTo:null,lTo:null};all.push(m);return m;};
+  const round=(r,c,br,pre)=>{const a=[];for(let i=0;i<c;i++)a.push(mk(br||'W',r,i,`${pre||'R'+r}-${i+1}`));return a;};
+  const link=(a,b)=>a.forEach((m,i)=>m.wTo=[b[i>>1].id,i&1]);
+  let r=1;W[1]=round(1,N/2);
+  if(fmt==='single'){while(W[r].length>1){W[r+1]=round(r+1,W[r].length/2);link(W[r],W[r+1]);r++;}}
+  else{
+    W[2]=round(2,N/4);link(W[1],W[2]);
+    const SC=round(1,N/4,'L','2C');L.push(SC);W[1].forEach((m,i)=>m.lTo=[SC[i>>1].id,i&1]);
+    W[3]=round(3,N/4);W[2].forEach((m,j)=>m.wTo=[W[3][j].id,0]);SC.forEach((m,j)=>m.wTo=[W[3][SC.length-1-j].id,1]);
+    r=3;while(W[r].length>1){W[r+1]=round(r+1,W[r].length/2);link(W[r],W[r+1]);r++;}
+  }
+  const R=r,final=W[R][0];final.label='Final';
+  const GF1=mk('G',1,0,'—'),GF2=mk('G',2,0,'—');            // unused in these formats; kept so shared code can reference them
+  const order=fmt==='single'?W.slice(1).flat():[...W[1],...L[0],...W[2],...W.slice(3).flat()];
+  return{N,R,W,L,GF1,GF2,PI:[],all,order,byId:Object.fromEntries(all.map(m=>[m.id,m])),final,fmt};
+}
+function bracketPlan(P,playin){
+  let N=4;while(N<P)N*=2;
+  if(playin&&N>P&&N/2>=4){return{N:N/2,k:P-N/2};}   // k play-in matches, losers out
+  return{N,k:0};
+}
+function compute(){
+  const P=T.players.length,k=T.k||0;
+  M=buildMatches(T.N,k,T.layout||1,fmtOf(T));
+  const order=seedOrder(T.N),direct=P-2*k;
+  // Byes are spread one per round-2 game (standard seed placement). A round-1 loser whose losers-Rd1 opponent is a
+  // bye advances automatically and meets a round-2 loser, which is the standard printed-sheet structure for odd fields.
+  // seeds 1..direct = players who skip the play-in; remaining seeds are filled by play-in winners; past P = BYE
+  const pl=s=>s<=direct?(2*k+s-1):(s-direct<=k?null:'BYE');
+  M.W[1].forEach((m,i)=>{m.p1=pl(order[2*i]);m.p2=pl(order[2*i+1]);});
+  // play-in match i: players 2i, 2i+1 → winner takes seed direct+1+i
+  M.PI.forEach((m,i)=>{m.p1=2*i;m.p2=2*i+1;const seed=direct+1+i,slot=order.indexOf(seed);m.wTo=[M.W[1][slot>>1].id,slot&1];});
+  let changed=true;
+  while(changed){changed=false;
+    for(const m of M.all){
+      if(m.winner!==null||m.p1===null||m.p2===null)continue;
+      let w=null;const r=T.results[m.id];
+      if(m.p2==='BYE')w=1;else if(m.p1==='BYE')w=2;
+      else if(typeof r==='number')w=r;                       // legacy format (pre-reset-feature saves)
+      else if(r&&r.a===m.p1&&r.b===m.p2)w=r.w;               // only applies if the same two players are still in this match
+      if(!w)continue;
+      m.winner=w;changed=true;
+      const win=w===1?m.p1:m.p2,lose=w===1?m.p2:m.p1;
+      if(m.br==='G'){if(m.round===1&&w===2){M.GF2.p1=m.p1;M.GF2.p2=m.p2;}continue;}
+      if(m.wTo){const t=M.byId[m.wTo[0]];if(m.wTo[1]===0)t.p1=win;else t.p2=win;}
+      if(m.lTo){const t=M.byId[m.lTo[0]];if(m.lTo[1]===0)t.p1=lose;else t.p2=lose;}
+    }
+  }
+  // Match numbers: sequential in play order, skipping bye matches (nobody plays those)
+  let n=1;for(const m of M.order){if(m.p1==='BYE'||m.p2==='BYE')continue;m.num=n++;}
+  // Routing labels: where each match's loser drops to, and which match feeds each empty slot
+  M.src={};
+  for(const m of M.all){
+    if(m.wTo)(M.src[m.wTo[0]]=M.src[m.wTo[0]]||{})[m.wTo[1]+1]={m,type:'W'};
+    if(m.lTo)(M.src[m.lTo[0]]=M.src[m.lTo[0]]||{})[m.lTo[1]+1]={m,type:'L'};
+  }
+  for(const m of M.all){
+    if(!m.lTo||!m.num)continue;
+    let d=M.byId[m.lTo[0]];
+    while(d&&!d.num&&(d.p1==='BYE'||d.p2==='BYE')&&d.wTo)d=M.byId[d.wTo[0]];   // skip through bye matches to the first real one
+    if(d&&d.num)m.loserTo=d.num;
+  }
+  // Next up: lowest-numbered match that is ready to play and not already marked underway
+  T.active=T.active||{};
+  for(const id of Object.keys(T.active)){const m=M.byId[id];if(!m||m.winner!==null||typeof m.p1!=='number'||typeof m.p2!=='number')delete T.active[id];}
+  const nx=M.order.find(m=>m.num&&m.winner===null&&typeof m.p1==='number'&&typeof m.p2==='number'&&!T.active[m.id]);
+  M.nextUp=nx?nx.id:null;
+  // Normalise: upgrade legacy numeric results, and drop any result whose match no longer has those players
+  for(const id of Object.keys(T.results)){
+    const m=M.byId[id],r=T.results[id];
+    if(!m||m.winner===null){delete T.results[id];continue;}
+    if(typeof r==='number')T.results[id]={w:r,a:m.p1,b:m.p2};
+  }
+}
+function champion(){
+  if(M.fmt!=='double'){const f=M.final;if(f.winner===1)return{first:f.p1,second:f.p2};if(f.winner===2)return{first:f.p2,second:f.p1};return null;}
+  const g1=M.GF1,g2=M.GF2;
+  if(g1.winner===1)return{first:g1.p1,second:g1.p2};
+  if(g1.winner===2&&g2.winner)return{first:g2.winner===1?g2.p1:g2.p2,second:g2.winner===1?g2.p2:g2.p1};
+  return null;
+}
+function ord(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+function placeLabel(a,c){return c===1?ord(a):`${ord(a)}–${ord(a+c-1)}`;}
+function standings(){
+  const place={},labels=[];const c=champion();
+  labels.push([1,1]);labels.push([2,1]);
+  if(c){place[c.first]=ord(1);place[c.second]=ord(2);}
+  let next=3;
+  if(M.fmt!=='double'){
+    const rounds=[];for(let r=M.R-1;r>=1;r--){if(M.fmt==='modified'&&r===1)continue;rounds.push(M.W[r]);}
+    if(M.fmt==='modified')rounds.push(M.L[0]);
+    for(const rd of rounds){
+      const ms=rd.filter(m=>m.p1!=='BYE'&&m.p2!=='BYE');if(!ms.length)continue;
+      const lab=placeLabel(next,ms.length);labels.push([next,ms.length]);rd.placeStart=next;rd.placeCount=ms.length;
+      for(const m of ms)if(m.winner){const l=m.winner===1?m.p2:m.p1;if(typeof l==='number')place[l]=lab;}
+      next+=ms.length;
+    }
+    return{place,labels};
+  }
+  for(let k=M.L.length-1;k>=0;k--){
+    const ms=M.L[k].filter(m=>m.p1!=='BYE'&&m.p2!=='BYE');if(!ms.length)continue;
+    const lab=placeLabel(next,ms.length);labels.push([next,ms.length]);
+    M.L[k].placeStart=next;M.L[k].placeCount=ms.length;
+    for(const m of ms)if(m.winner){const l=m.winner===1?m.p2:m.p1;if(typeof l==='number')place[l]=lab;}
+    next+=ms.length;
+  }
+  if(M.PI.length){
+    const lab=placeLabel(next,M.PI.length);labels.push([next,M.PI.length]);
+    for(const m of M.PI)if(m.winner)place[m.winner===1?m.p2:m.p1]=lab;
+  }
+  return{place,labels};
+}
+
+/* ---------- rendering ---------- */
+function name(p){return p==='BYE'?'BYE':p===null?'—':T.players[p];}
+// For an empty slot: "Winner of #n" / "Loser of #n", looking through bye matches that have no number
+function slotLabel(m,slot,depth){
+  const s=M.src[m.id]&&M.src[m.id][slot];if(!s||(depth||0)>6)return '—';
+  const sm=s.m;
+  if(sm.num)return (s.type==='W'?'Winner of #':'Loser of #')+sm.num;
+  if(s.type==='L')return '—';
+  const other=sm.p1==='BYE'?2:sm.p2==='BYE'?1:null;if(!other)return '—';
+  return slotLabel(sm,other,(depth||0)+1);
+}
+function raceFor(m){if(M&&m===M.final&&M.fmt!=='double')return T.raceF;return m.br==='W'?T.raceW:m.br==='L'?T.raceL:m.br==='P'?(T.raceP||T.raceL):T.raceF;}
+function matchEl(m){
+  const d=document.createElement('div');d.className='match';d.dataset.id=m.id;
+  const live=m.winner===null&&typeof m.p1==='number'&&typeof m.p2==='number';
+  const row=(p,slot)=>{
+    const r=document.createElement('div');let cls='p';
+    if(p==='BYE')cls+=' bye';else if(p===null)cls+=' tbd';
+    if(m.winner===slot)cls+=' win';else if(m.winner!==null&&p!==null&&p!=='BYE')cls+=' lose';
+    if(live)cls+=' live';
+    r.className=cls;
+    const sl=typeof p==='number'&&T.skills&&T.skills[p];
+    const seed=typeof p==='number'?(sl?`<span class="seed sl" title="Skill level ${sl}">${sl}</span>`:`<span class="seed">${p+1}</span>`):'<span class="seed"></span>';
+    r.innerHTML=seed+`<span class="n">${esc(p===null?slotLabel(m,slot):name(p))}</span>`;
+    if(live&&!VIEWER){r.title='Click to mark winner';r.onclick=()=>setWinner(m.id,slot);}
+    return r;
+  };
+  const resettable=m.winner!==null&&T.results[m.id];
+  const body=document.createElement('div');body.className='body';
+  const lt=m.loserTo?` <b class="lt" title="Loser drops to match #${m.loserTo}">L→#${m.loserTo}</b>`:'';
+  body.innerHTML=`<div class="mh"><span>${m.label}${lt}${moneyTag(m)}</span><span>Race To ${raceFor(m)}${resettable?' <button class="reset noprint" title="Reset this result">↺</button>':''}</span></div>`;
+  if(resettable&&!VIEWER)body.querySelector('.reset').onclick=e=>{e.stopPropagation();clearMatch(m.id);};
+  body.appendChild(row(m.p1,1));body.appendChild(row(m.p2,2));
+  d.appendChild(body);
+  if(m.num){
+    const nb=document.createElement('div');nb.className='num';nb.textContent=m.num;
+    if(m.winner!==null){nb.classList.add('done');nb.title='Played';}
+    else if(live){
+      const on=!!(T.active&&T.active[m.id]);
+      if(on){nb.classList.add('on');nb.title='Underway — click to un-mark';}
+      else{nb.title='Click when this match goes to a table';}
+      nb.classList.add('click');
+      if(!VIEWER)nb.onclick=e=>{e.stopPropagation();T.active=T.active||{};if(on)delete T.active[m.id];else T.active[m.id]=true;render();};
+    }else nb.title='Match number';
+    d.appendChild(nb);
+  }
+  if(M.nextUp===m.id)d.classList.add('next');
+  return d;
+}
+let UNIT=92; // vertical space per match card incl. gap; recomputed in Show All
+const isReal=m=>m.p1!=='BYE'&&m.p2!=='BYE';
+function renderRounds(container,rounds,titleFn){
+  container.innerHTML='';
+  const maxCount=Math.max(1,...rounds.map(r=>r.filter(isReal).length));
+  rounds.forEach((all,i)=>{
+    const ms=all.filter(isReal);if(!ms.length)return;      // bye-only rounds (e.g. losers Rd1 in a 12-player field) aren't drawn
+    const col=document.createElement('div');col.className='round';
+    col.innerHTML=`<h3>${titleFn(all,i)}</h3>`;
+    const inner=document.createElement('div');inner.className='col';
+    const colH=isBoard()?Math.max(maxCount*UNIT,window.innerHeight-124):maxCount*UNIT;   // board mode: spread cards over the whole screen height
+    inner.style.minHeight=colH+'px';
+    ms.forEach(m=>inner.appendChild(matchEl(m)));
+    col.appendChild(inner);container.appendChild(col);
+  });
+}
+function isShowAll(){return document.body.classList.contains('showall');}
+function isBoard(){return document.body.classList.contains('board');}
+// Narrow screens (phones, tablets held upright) get the compact board: tabs, fixed readable sizes, scrolling
+function isCompact(){const w=window.innerWidth,h=window.innerHeight;return w<1000||(w<1300&&h>w);}
+let CMP_TAB=(()=>{try{return localStorage.getItem('pb.tab')||'W';}catch(e){return 'W';}})();
+function applyCompact(){
+  const on=isBoard()&&isCompact();
+  document.body.classList.toggle('compact',on);
+  if(M&&M.fmt==='single')CMP_TAB='W';
+  const pW=$('#brackets').children[0],pL=$('#brackets').children[2];
+  if(on){
+    $('#cmpTop').appendChild($('#ovReady'));$('#cmpBottom').appendChild($('#ovPay'));$('#cmpBottom').appendChild($('#ovStand'));
+    pW.classList.toggle('off',CMP_TAB!=='W');pL.classList.toggle('off',CMP_TAB!=='L');
+    document.querySelectorAll('#cmpBar .tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===CMP_TAB));
+  }else if(isBoard()&&M&&M.fmt!=='double'){
+    let sc=$('#sideCol');if(!sc){sc=document.createElement('div');sc.id='sideCol';}
+    const host=M.fmt==='single'?pW:pL;host.appendChild(sc);
+    sc.appendChild($('#ovPay'));sc.appendChild($('#ovStand'));sc.appendChild($('#ovReady'));
+    pW.classList.remove('off');pL.classList.remove('off');
+  }else{
+    pW.appendChild($('#ovPay'));pW.appendChild($('#ovReady'));pL.appendChild($('#ovStand'));
+    pW.classList.remove('off');pL.classList.remove('off');
+  }
+  return on;
+}
+// Live-match counts on the tabs so you know which side has something happening
+function compactBadges(){
+  if(!document.body.classList.contains('compact')||!M)return;
+  const live=br=>M.order.filter(m=>m.num&&m.br===br&&m.winner===null&&typeof m.p1==='number'&&typeof m.p2==='number').length;
+  const w=live('W')+live('G')+live('P'),l=live('L');
+  const names=M.fmt==='double'?['Winners','Losers']:M.fmt==='modified'?['Main','2nd Chance']:['Bracket',''];
+  document.querySelectorAll('#cmpBar .tab').forEach(b=>{const n=b.dataset.tab==='W'?w:l;b.innerHTML=(b.dataset.tab==='W'?names[0]:names[1])+(n?`<b>${n}</b>`:'');});
+}
+let VIEW_BEFORE_BOARD=null;
+function setBoard(on){
+  if(on===isBoard())return;
+  if(on){VIEW_BEFORE_BOARD=isShowAll();document.body.classList.add('board','showall');}
+  else{document.body.classList.remove('board');document.body.classList.toggle('showall',!!VIEW_BEFORE_BOARD);}
+  FIT_SHRINK=0;if(T&&M)render();
+}
+// Show All: size columns and cards so both brackets + finals fit the window with no scrolling
+function fitShowAll(){
+  const bs=document.body.style;
+  if(isShowAll()&&M&&applyCompact()){
+    const colw=window.innerWidth<480?158:178;
+    bs.setProperty('--colw',colw+'px');bs.setProperty('--gap','14px');bs.setProperty('--fs','13px');bs.setProperty('--numw','26px');bs.setProperty('--seed','inline');
+    setUnit(78);const br=$('#brackets');br.children[0].style.flex='';br.children[2].style.flex='';return;
+  }
+  applyCompact();
+  if(!isShowAll()||!M){UNIT=92;['--colw','--gap','--cgap','--fs','--rowh','--numw','--seed'].forEach(v=>bs.removeProperty(v));
+    const br=$('#brackets');br.children[0].style.flex='';br.children[2].style.flex='';return;}
+  const realCols=rs=>rs.filter(r=>r.some(isReal)).length;
+  const Wr=[];for(let r=1;r<=M.R;r++)Wr.push(M.W[r]);
+  const dbl=M.fmt==='double',res=(isBoard()&&!dbl)?2:0;
+  const wCols=realCols(Wr)+(M.PI.length?1:0)+(dbl?(M.GF1.winner===2?2:1):0)+(M.fmt==='single'?res:0), lCols=realCols(M.L)+(M.fmt==='modified'?res:0), total=wCols+lCols;
+  let gap=total>12?8:12;
+  const calcW=g=>window.innerWidth-32-2*28-4-(total-2)*g-6;
+  let colw=Math.floor(calcW(gap)/total);
+  if(colw<92){gap=6;colw=Math.floor(calcW(gap)/total);}   // tight screens (iPad, laptop): close up the gaps before shrinking cards further
+  colw=Math.max(80,Math.min(isBoard()?230:190,colw));
+  const rows=Math.max(1,...Wr.map(r=>r.filter(isReal).length),...M.L.map(r=>r.filter(isReal).length),M.PI.length);
+  const header=document.querySelector('header').offsetHeight;
+  const availH=window.innerHeight-header-16-14-26-22-14-16-12;   // main pad, panel pad, h2, round h3, panel pad, margins
+  setUnit(Math.max(40,Math.min(isBoard()?130:96,Math.floor((FIT_SHRINK?availH-FIT_SHRINK:availH)/rows))));
+  const fs=colw<95?9.5:colw<110?10:colw<130?10.5:colw<150?11:colw<170?12:13;
+  bs.setProperty('--colw',colw+'px');bs.setProperty('--gap',gap+'px');
+  bs.setProperty('--fs',fs+'px');bs.setProperty('--numw',(colw<120?20:colw<150?24:28)+'px');
+  bs.setProperty('--seed',colw<140?'none':'inline');
+  const br=$('#brackets');br.children[0].style.flex=M.fmt==='single'?'1 1 auto':`0 0 ${wCols*colw+(wCols-1)*gap+28}px`;br.children[2].style.flex='1 1 0';
+}
+let FIT_SHRINK=0;
+function setUnit(unit){
+  const bs=document.body.style;UNIT=unit;
+  const cgap=unit<56?3:unit<70?5:unit<84?7:10;
+  const rowh=Math.max(13,Math.floor((unit-cgap-15)/2));
+  bs.setProperty('--cgap',cgap+'px');bs.setProperty('--rowh',rowh+'px');bs.setProperty('--unit',unit+'px');
+}
+// After rendering in Show All, measure; if the brackets push the money section below the window, shrink and re-render (max 3 passes)
+function fitCheck(pass){
+  if(!isShowAll()||!M||document.body.classList.contains('compact'))return;
+  const over=(isBoard()?$('#brackets').getBoundingClientRect().bottom+8:$('#bottom').getBoundingClientRect().top)+window.scrollY-window.innerHeight;
+  if(over>0&&pass<3&&UNIT>40){FIT_SHRINK+=over+4;render(pass+1);}
+}
+let LAST_W=window.innerWidth,LAST_C=null;
+window.addEventListener('resize',()=>{if(!T)return;const c=isBoard()&&isCompact();
+  if(c&&LAST_C===true&&window.innerWidth===LAST_W)return;                 // phone address bar showing/hiding: nothing to re-lay out
+  LAST_W=window.innerWidth;LAST_C=c;FIT_SHRINK=0;render();});
+function render(pass){
+  compute();
+  $('#setup').hidden=true;$('#tourney').hidden=false;$('#tbar').hidden=false;
+  const F=fmtOf(T);document.body.classList.toggle('fmt-single',F==='single');document.body.classList.toggle('fmt-modified',F==='modified');
+  $('#brackets').children[0].querySelector('h2').textContent=F==='double'?'Winners Bracket':F==='single'?'Bracket':'Main Bracket';
+  $('#brackets').children[2].querySelector('h2').textContent=F==='modified'?'Second Chance':'Losers Bracket';
+  $('#hdrsub').textContent=`${T.name||FORMAT_NAMES[F]} · ${T.name?FORMAT_NAMES[F]+' · ':''}${T.game} · ${T.players.length} Players${T.draw==='skill'?' · Skill-Grouped Draw':T.draw==='listed'?' · Drawn in Listed Order':''}${T.layout===4&&F==='double'?' · Classic Flow':''}${T.date?' · '+T.date:''}`;
+  $('#pipanel').hidden=!M.PI.length;
+  if(M.PI.length){const pb=$('#pb');pb.innerHTML='';const col=document.createElement('div');col.className='round';col.style.minWidth='0';
+    const inner=document.createElement('div');inner.style.cssText='display:flex;flex-wrap:wrap;gap:10px';M.PI.forEach(m=>{const e=matchEl(m);e.style.width='190px';inner.appendChild(e);});col.appendChild(inner);pb.appendChild(col);}
+  fitShowAll();
+  standings();   // sets per-round finishing places, needed for the money tags on match cards
+  const W=[];for(let r=1;r<=M.R;r++)W.push(M.W[r]);
+  const gf=M.fmt!=='double'?[]:[[M.GF1]];if(M.fmt==='double'&&M.GF1.winner===2)gf.push([M.GF2]);
+  const gfTitle=i=>i===0?'Grand Final':'Reset match';
+  const off=(isShowAll()&&M.PI.length)?1:0;
+  const wr=[...(off?[M.PI]:[]),...W,...gf];
+  if(M.fmt!=='double')renderRounds($('#wb'),W,(ms,i)=>{const r=i+1;return r===M.R?'Final':r===M.R-1?'Semifinals':r===M.R-2?'Quarterfinals':`Round ${r}`;});
+  else renderRounds($('#wb'),wr,(ms,i)=>i<off?'Play-in':i-off<W.length?(i-off===W.length-1?'Winners Final':`Winners Rd ${i-off+1}`):gfTitle(i-off-W.length));
+  if(M.fmt==='modified')renderRounds($('#lb'),M.L,()=>'Round-1 losers');
+  else if(M.fmt==='single')$('#lb').innerHTML='';
+  else renderRounds($('#lb'),M.L,(ms,i)=>i===M.L.length-1?'Losers Final':`Losers Rd ${i+1}`);
+  const c=champion();
+  $('#champ').hidden=!c;
+  if(c)$('#champ').innerHTML=`🏆 Champion: <b>${esc(T.players[c.first])}</b> &nbsp;·&nbsp; Runner-up: ${esc(T.players[c.second])}`;
+  renderQueue();
+  if(isBoard()){renderBoardCards();compactBadges();}
+  $('#undo').disabled=!T.history.length;
+  $('#redraw').disabled=Object.keys(T.results).length>0||T.draw==='listed';
+  renderPayouts();
+  save();
+  fitCheck(pass||0);
+  requestAnimationFrame(drawWires);
+  renderBcastStatus();
+}
+// Elbow connectors from each game to the game its winner advances to, drawn per bracket panel.
+function drawWires(){
+  for(const id of ['wb','lb','pb']){
+    const rounds=$('#'+id);if(!rounds||!M)continue;
+    rounds.querySelectorAll('svg.wires').forEach(e=>e.remove());
+    const cards=[...rounds.querySelectorAll('.match')];if(cards.length<2)continue;
+    const base=rounds.getBoundingClientRect();
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','wires');
+    svg.setAttribute('viewBox',`0 0 ${rounds.scrollWidth} ${rounds.scrollHeight}`);svg.setAttribute('preserveAspectRatio','none');
+    const byId={};cards.forEach(c=>byId[c.dataset.id]=c);
+    const rel=r=>({l:r.left-base.left,r:r.right-base.left,t:r.top-base.top,b:r.bottom-base.top});
+    const draw=(fromEl,toEl,slot,cls)=>{
+      const a=rel(fromEl.getBoundingClientRect()),rows=toEl.querySelectorAll('.p');
+      const row=rows[slot]||toEl;const bb=rel(row.getBoundingClientRect()),tb=rel(toEl.getBoundingClientRect());
+      const x1=a.r,y1=(a.t+a.b)/2,x2=tb.l,y2=(bb.t+bb.b)/2,xm=x1+(x2-x1)/2;
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',`M${x1} ${y1} H${xm} V${y2} H${x2}`);if(cls)p.setAttribute('class',cls);svg.appendChild(p);
+    };
+    for(const c of cards){
+      const m=M.byId[c.dataset.id];if(!m)continue;
+      if(m.wTo&&byId[m.wTo[0]])draw(c,byId[m.wTo[0]],m.wTo[1]);
+      if(m===M.GF1&&byId[M.GF2.id])draw(c,byId[M.GF2.id],-1,'reset');
+    }
+    rounds.insertBefore(svg,rounds.firstChild);
+  }
+}
+// Tier groups for a places count: tied finishes (5-6, 7-8, 9-12, ...) must be paid the same, so round them together
+function groupsFor(places,fmt,P){const g=[];let prev=0;for(const t of tiersFor(fmt,P)){if(prev>=places)break;g.push(Math.min(t,places)-prev);prev=Math.min(t,places);}if(prev<places)g.push(places-prev);return g;}
+function tierGroups(places){return groupsFor(places,fmtOf(T),T?T.players.length:64);}
+// Round percentage payouts to whole bills ($5, $10, ...) while keeping the total equal to the pot and 1st >= 2nd >= 3rd ...
+function roundSplit(pot,pcts,step,places,grp){
+  const groups=grp||tierGroups(places);const odd=pot%step,P=pot-odd;
+  let idx=0;const per=groups.map(g=>{const v=pot*(+pcts[idx]||0)/100;idx+=g;return v;});
+  const r=per.map(v=>Math.round(v/step)*step);
+  const total=()=>r.reduce((a,v,i)=>a+v*groups[i],0);
+  let guard=200;
+  while(total()!==P&&guard-->0){
+    const t=total();
+    if(t>P){ // trim the group whose rounding inflated its share the most (relative), without breaking the order
+      let best=-1,bs=-1;
+      for(let i=0;i<r.length;i++){if(r[i]-step<0||step*groups[i]>t-P)continue;if(i<r.length-1&&r[i]-step<r[i+1])continue;
+        const sc=per[i]>0?(r[i]-per[i])/per[i]:1;if(sc>bs){bs=sc;best=i;}}
+      if(best<0){for(let i=r.length-1;i>=0;i--){if(r[i]-step>=0&&step*groups[i]<=t-P){best=i;break;}}}
+      if(best<0)break;r[best]-=step;
+    }else{ // top up the group whose rounding cut its share the most
+      let best=-1,bs=-Infinity;
+      for(let i=0;i<r.length;i++){if(step*groups[i]>P-t)continue;if(i>0&&r[i]+step>r[i-1])continue;
+        const sc=per[i]>0?(per[i]-r[i])/per[i]:0;if(sc>bs){bs=sc;best=i;}}
+      if(best<0)best=0;r[best]+=step;
+    }
+  }
+  r[0]+=P-total()+odd;   // whatever can't be placed in whole steps goes to 1st
+  const out=[];r.forEach((v,i)=>{for(let k=0;k<groups[i];k++)out.push(v);});
+  return out;
+}
+function payoutAmounts(){return computePayout(T.payout,T.players.length,fmtOf(T));}
+function computePayout(p,n,fmt){
+  const grp=groupsFor(p.places,fmt,n);
+  const gross=n*(+p.entry||0),house=p.greenMode==='flat'?+p.green||0:n*(+p.green||0),pot=Math.max(0,gross-house+(+p.added||0));
+  let pctTotal=0;const amts=[];
+  if(p.mode==='amt'){
+    // dollar mode: amounts are typed directly; percentages are derived for display
+    p.amt=p.amt||[];
+    for(let i=0;i<p.places;i++){const a=Math.max(0,Math.round(+p.amt[i]||0));amts.push(a);pctTotal+=pot?a/pot*100:0;}
+    return{gross,house,pot,pctTotal:Math.round(pctTotal*10)/10,amts,amtTotal:amts.reduce((a,b)=>a+b,0)};
+  }
+  for(let i=0;i<p.places;i++){const pct=+p.pct[i]||0;pctTotal+=pct;amts.push(Math.floor(pot*pct/100));}
+  const step=+p.round||1;
+  if(Math.abs(pctTotal-100)<0.001){
+    if(step>1){const r=roundSplit(pot,p.pct,step,p.places,grp);amts.length=0;amts.push(...r);}
+    else{const rem=pot-amts.reduce((a,b)=>a+b,0);if(amts.length)amts[0]+=rem;}   // give rounding remainder to first place
+  }
+  return{gross,house,pot,pctTotal,amts,amtTotal:amts.reduce((a,b)=>a+b,0)};
+}
+// Money attached to a match: what its loser takes home (and, for the final, what the winner takes)
+function matchMoney(m){
+  const {amts}=payoutAmounts();const pay=i=>amts[i-1]||0;
+  if(M.fmt!=='double'){
+    if(m===M.final)return{win:pay(1),lose:pay(2)};
+    const rd=m.br==='L'?M.L[m.round-1]:M.W[m.round];if(!rd||!rd.placeStart)return null;
+    const a=pay(rd.placeStart),b=pay(rd.placeStart+rd.placeCount-1);if(!a&&!b)return null;return{lose:a,loseTo:b!==a?b:null};
+  }
+  if(m.br==='G'){
+    if(m.round===2||(m.round===1&&m.winner!==2))return{win:pay(1),lose:pay(2)};
+    return{win:pay(1),lose:pay(2),soft:true};   // final game 1: if the losers-side player wins, nothing is decided yet
+  }
+  if(m.br==='L'){
+    const rd=M.L[m.round-1];if(!rd||!rd.placeStart)return null;
+    const a=pay(rd.placeStart),b=pay(rd.placeStart+rd.placeCount-1);
+    if(!a&&!b)return null;return{lose:a,loseTo:b!==a?b:null};
+  }
+  return null;
+}
+function moneyTag(m){
+  const mm=matchMoney(m);if(!mm)return '';
+  if(m.br==='G'||m===M.final){
+    const t=mm.soft?`1st ${fmt(mm.win)} / 2nd ${fmt(mm.lose)} — if the losers-side player wins this one, it goes to a reset match`:`1st ${fmt(mm.win)} / 2nd ${fmt(mm.lose)}`;
+    return ` <b class="cash" title="${t}">${fmt(mm.win)} / ${fmt(mm.lose)}</b>`;
+  }
+  const amt=mm.loseTo?`${fmt(mm.loseTo)}–${fmt(mm.lose)}`:fmt(mm.lose);
+  return ` <b class="cash" title="Loser of this match finishes in the money: ${amt}">${amt}</b>`;
+}
+// Ready strip: every match that can go to a table right now (both players known, not finished), in number order.
+// Play the lowest-numbered READY match, not the next number: losers-round drop-ins arrive in reverse order by design.
+function renderQueue(){
+  const q=$('#queue');q.innerHTML='';
+  const live=M.order.filter(m=>m.num&&m.winner===null&&typeof m.p1==='number'&&typeof m.p2==='number');
+  const ready=live.filter(m=>!T.active[m.id]),on=live.filter(m=>T.active[m.id]);
+  const waiting=M.order.filter(m=>m.num&&m.winner===null&&!(typeof m.p1==='number'&&typeof m.p2==='number')).length;
+  if(!live.length&&!waiting){q.hidden=true;return;}q.hidden=false;
+  const lab=document.createElement('span');lab.className='ql';lab.textContent=ready.length?'Ready to Play':'Nothing Ready';q.appendChild(lab);
+  for(const m of ready){const c=document.createElement('span');c.className='chip';c.title='Tap when this match goes to a table';
+    c.innerHTML=`<b>${m.num}</b>${esc(name(m.p1))} <span style="color:var(--muted)">v</span> ${esc(name(m.p2))}`;
+    if(!VIEWER)c.onclick=()=>{T.active[m.id]=true;render();};q.appendChild(c);}
+  if(on.length){const l2=document.createElement('span');l2.className='ql';l2.style.marginLeft='10px';l2.textContent='On a Table';q.appendChild(l2);
+    for(const m of on){const c=document.createElement('span');c.className='chip on';c.title='Underway — click the match number on its card to un-mark';
+      c.innerHTML=`<b>${m.num}</b>${esc(name(m.p1))} <span style="color:var(--muted)">v</span> ${esc(name(m.p2))}`;q.appendChild(c);}}
+  if(waiting){const w=document.createElement('span');w.className='wait';w.textContent=`${waiting} Match${waiting===1?'':'es'} Waiting on Players`;q.appendChild(w);}
+}
+// Board mode: payouts, ready-to-play and standings cards in the empty corners of the bracket panels
+function renderBoardCards(){
+  const p=T.payout,{pot,amts}=payoutAmounts(),{place,labels}=standings();
+  const byPlace={};for(const k in place)(byPlace[place[k]]=byPlace[place[k]]||[]).push(T.players[k]);
+  let h=`<h4><span>Payouts</span><span class="pot">Pot ${fmt(pot)}</span></h4>`;
+  for(let i=0;i<p.places;){
+    const lab=labels.find(l=>i+1>=l[0]&&i+1<l[0]+l[1]);const start=lab?lab[0]:i+1,count=lab?Math.min(lab[1],p.places-start+1):1;
+    const labStr=lab?placeLabel(lab[0],lab[1]):ord(i+1);const who=(byPlace[labStr]||[]).slice().sort();
+    const tie=count>1;h+=`<div class="r"><span class="pl">${tie?placeLabel(start,count):ord(i+1)}</span><span class="amt">${fmt(amts[i]||0)}${tie?' ea':''}</span><span class="who ${who.length?'':'tbd'}">${esc(who.length?who.join(', '):'—')}</span></div>`;
+    i+=count;
+  }
+  $('#ovPay').innerHTML=h;
+  const live=M.order.filter(m=>m.num&&m.winner===null&&typeof m.p1==='number'&&typeof m.p2==='number');
+  const ready=live.filter(m=>!T.active[m.id]),on=live.filter(m=>T.active[m.id]);
+  const chip=(m,cls)=>`<span class="chip ${cls}" title="${esc(name(m.p1))} v ${esc(name(m.p2))}"><b>${m.num}</b><span class="cn">${esc(name(m.p1))} <span style="color:var(--muted)">v</span> ${esc(name(m.p2))}</span></span>`;
+  let r='<h4><span>Ready to Play</span>'+(ready.length?'<span>'+ready.length+'</span>':'')+'</h4>'+(ready.length?'<div class="chips">'+ready.map(m=>chip(m,'')).join('')+'</div>':'<span class="none">Nothing Waiting</span>');
+  if(on.length)r+='<h4 style="margin-top:6px"><span>On a Table</span><span>'+on.length+'</span></h4><div class="chips">'+on.map(m=>chip(m,'on')).join('')+'</div>';
+  $('#ovReady').innerHTML=champion()?'<h4><span>Tournament Complete</span></h4>':r;
+  const entries=Object.entries(place).sort((a,b)=>parseInt(a[1])-parseInt(b[1])||T.players[a[0]].localeCompare(T.players[b[0]]));
+  let st='<h4><span>Standings</span><span>'+(T.players.length-entries.length)+' Still Playing</span></h4>';
+  st+=entries.length?entries.map(([k,lab])=>`<div class="r"><span class="pl">${lab}</span><span class="who">${esc(T.players[k])}</span></div>`).join(''):'<span class="none">Nobody Out Yet</span>';
+  $('#ovStand').innerHTML=st;
+  requestAnimationFrame(fitBoardCards);
+}
+// If a card's content is taller than its slot, step the text size down (to a floor), then let the slim scrollbar take over
+function fitBoardCards(){
+  if(!isBoard()||document.body.classList.contains('compact'))return;
+  for(const id of ['ovPay','ovReady','ovStand']){
+    const el=$('#'+id);if(!el)continue;el.style.fontSize='';
+    let fs=parseFloat(getComputedStyle(el).fontSize)||12;
+    while(el.scrollHeight>el.clientHeight+1&&fs>9){fs-=0.5;el.style.fontSize=fs+'px';}
+  }
+}
+// ---------- payout settings editor (setup screen and the Edit Payouts dialog) ----------
+const STRUCTS=[['20','Top 20% of Field'],['25','Top 25% of Field'],['30','Top 30% of Field'],['35','Top 35% of Field'],['custom','Custom']];
+function defaultPayCfg(){return{entry:20,green:0,greenMode:'per',added:0,struct:'25',split:'rec',mode:'pct',round:5,places:4,pct:[],amt:[]};}
+// Bring places and the split in line with the chosen structure, keeping any custom numbers the user typed where they still fit
+function normalizePay(c,P,fmt){
+  if(!c.struct)c.struct='custom';if(!c.split)c.split=c.mode==='amt'?'custom':'rec';
+  if(c.struct!=='custom')c.places=placesFor(Math.max(P,3),fmt,+c.struct/100);
+  const ok=tiersFor(fmt,Math.max(P,3)).filter(t=>PRESETS[t]&&t<=Math.max(P,2));
+  if(!PRESETS[c.places]||(fmt!=='double'&&!ok.includes(c.places)))c.places=ok.reduce((a,b)=>Math.abs(b-c.places)<=Math.abs(a-c.places)?b:a,ok[0]);
+  const preset=presetFor(c.places,fmt,Math.max(P,3));
+  if(c.split==='rec'){c.mode='pct';c.pct=preset;}
+  else{
+    if(c.mode!=='amt')c.mode='pct';
+    if(!c.pct||c.pct.length!==c.places)c.pct=preset.slice();
+    if(!c.amt||c.amt.length!==c.places){const pr=computePayout({...c,mode:'pct',pct:preset},Math.max(P,0),fmt);c.amt=pr.amts.slice();}
+  }
+  return c;
+}
+function payoutEditor(host,c,getP,getFmt,onChange){
+  host.classList.add('pe');
+  const sel=(cls,opts,v)=>`<select class="${cls}">${opts.map(([k,t])=>`<option value="${k}"${String(v)===k?' selected':''}>${t}</option>`).join('')}</select>`;
+  function draw(){
+    const P=getP(),F=getFmt();normalizePay(c,P,F);
+    const placeOpts=Object.keys(PRESETS).map(Number).filter(n=>n<=Math.max(P,2)).map(n=>[String(n),String(n)]);
+    const grp=groupsFor(c.places,F,Math.max(P,3));
+    const pr=computePayout(c,P,F);
+    let h=`<div class="row">
+      <label>Entry Fee $<input type="number" class="f-entry" min="0" step="1" value="${c.entry}"></label>
+      <label>Table/Green Fee $<input type="number" class="f-green" min="0" step="1" value="${c.green}"></label>
+      <label>Green Fee${sel('f-gmode',[['flat','One Total'],['per','Per Player']],c.greenMode)}</label>
+      <label>Added Money $<input type="number" class="f-added" min="0" step="1" value="${c.added}"></label></div>
+      <div class="row">
+      <label>Payout Structure${sel('f-struct',STRUCTS,c.struct)}</label>
+      ${c.struct==='custom'?`<label>Places Paid${sel('f-places',placeOpts,c.places)}</label>`:''}
+      <label>Payout %${sel('f-split',[['rec','Recommended'],['custom','Custom']],c.split)}</label>
+      ${c.split==='custom'?`<label>Enter As${sel('f-mode',[['pct','Percent'],['amt','Dollar Amounts']],c.mode)}</label>`:''}
+      ${c.mode==='amt'?'':`<label>Round To${sel('f-round',[['1','$1'],['5','$5'],['10','$10'],['20','$20']],c.round||1)}</label>`}
+      <span class="pe-hint">${P>=3?`Pays <b>${c.places}</b> of ${P} players${c.struct!=='custom'?` (${Math.round(c.places/P*100)}%${Math.abs(c.places/P*100-+c.struct)>=3?` — the closest whole tie group to ${c.struct}%`:''})`:''}`:'Add players to see places paid'}</span></div>`;
+    if(c.split==='custom'){
+      const amt=c.mode==='amt';let idx=0,cells='';
+      grp.forEach(g=>{const lab=placeLabel(idx+1,g)+(g>1?' each':'');const v=amt?c.amt[idx]:c.pct[idx];
+        cells+=`<label>${lab}<span>${amt?'$ ':''}<input type="number" min="0" step="${amt?1:0.5}" data-i="${idx}" data-g="${g}" value="${+(+v||0).toFixed(3)}">${amt?'':' %'}</span></label>`;idx+=g;});
+      const tot=amt?pr.amtTotal:Math.round(pr.pctTotal*100)/100,want=amt?pr.pot:100,good=Math.abs(tot-want)<0.01;
+      h+=`<div class="pe-custom"><h4>Custom split — ${amt?'dollars per player':'percent of the pot per player'}</h4><div class="pe-grid">${cells}</div>
+        <div class="pe-total ${good?'ok':'bad'}">Total: ${amt?fmt(tot):tot+'%'} ${good?'✓':`— needs to be ${amt?fmt(want)+' (the pot)':'100%'}`}</div></div>`;
+    }
+    if(P>=3){let idx=0,chips=`<span class="pot">Pot ${fmt(pr.pot)}</span>`;
+      grp.forEach(g=>{chips+=`<span>${placeLabel(idx+1,g)} <b>${fmt(pr.amts[idx]||0)}${g>1?' ea':''}</b></span>`;idx+=g;});
+      h+=`<div class="pe-preview">${chips}</div>`;}
+    host.innerHTML=h;
+    const q=x=>host.querySelector(x);
+    const num=(cls,key)=>{const e=q(cls);if(e)e.onchange=()=>{c[key]=Math.max(0,+e.value||0);changed();};};
+    num('.f-entry','entry');num('.f-green','green');num('.f-added','added');
+    const pick=(cls,fn)=>{const e=q(cls);if(e)e.onchange=()=>{fn(e.value);changed();};};
+    pick('.f-gmode',v=>c.greenMode=v);
+    pick('.f-struct',v=>{c.struct=v;});
+    pick('.f-places',v=>{c.places=+v;c.pct=[];c.amt=[];});
+    pick('.f-split',v=>{c.split=v;if(v==='custom'){c.pct=[];c.amt=[];}});
+    pick('.f-mode',v=>{if(v==='amt'){c.amt=computePayout({...c,mode:'pct'},getP(),getFmt()).amts.slice();}else{const pot=computePayout(c,getP(),getFmt()).pot;if(pot)c.pct=c.amt.map(a=>Math.round(a/pot*1000)/10);}c.mode=v;});
+    pick('.f-round',v=>c.round=+v);
+    host.querySelectorAll('.pe-grid input').forEach(e=>e.onchange=()=>{const i=+e.dataset.i,g=+e.dataset.g,v=Math.max(0,+e.value||0);
+      const arr=c.mode==='amt'?c.amt:c.pct;for(let k=0;k<g;k++)arr[i+k]=v;changed();});
+  }
+  function changed(){draw();if(onChange)onChange(c);}
+  draw();
+  return{refresh:draw,cfg:c,valid(){const P=getP(),pr=computePayout(c,P,getFmt());
+    if(c.split!=='custom')return null;
+    if(c.mode==='amt')return pr.amtTotal===pr.pot?null:`The custom payouts add up to ${fmt(pr.amtTotal)} but the pot is ${fmt(pr.pot)}.`;
+    return Math.abs(pr.pctTotal-100)<0.01?null:`The custom percentages add up to ${Math.round(pr.pctTotal*100)/100}%, not 100%.`;}};
+}
+function payoutSummaryText(p){
+  const st=p.struct&&p.struct!=='custom'?`Top ${p.struct}% of Field · `:'';
+  const sp=p.split==='custom'?(p.mode==='amt'?'Custom Dollar Amounts':'Custom Split'):'Recommended Split';
+  const rd=p.mode==='amt'||!(+p.round>1)?'':` · Rounded to $${p.round}`;
+  const gf=+p.green?` · Green Fee ${fmt(p.green)}${p.greenMode==='flat'?' Total':' Per Player'}`:'';
+  const ad=+p.added?` · ${fmt(p.added)} Added`:'';
+  return `${st}${p.places} Place${p.places===1?'':'s'} Paid · ${sp}${rd} · Entry ${fmt(p.entry)}${gf}${ad}`;
+}
+async function editPayouts(){
+  const c=JSON.parse(JSON.stringify(T.payout));const host=document.createElement('div');
+  const ed=payoutEditor(host,c,()=>T.players.length,()=>fmtOf(T));
+  for(;;){
+    const v=await dialog({title:'Edit Payouts',body:host,wide:true,buttons:[{label:'Cancel',value:null},{label:'Save',value:'save',primary:true}]});
+    if(v!=='save')return;
+    const err=ed.valid();if(err){alert(err);continue;}
+    T.payout=c;render();return;
+  }
+}
+function renderPayouts(){
+  const p=T.payout,n=T.players.length;
+  if(!p.split)normalizePay(p,n,fmtOf(T));                                   // older saves: fill in structure/split labels
+  const {gross,house,pot,amts,amtTotal}=payoutAmounts();
+  $('#p_summary').textContent=payoutSummaryText(p);
+  $('#p_n').textContent=n;$('#p_gross').textContent=fmt(gross);$('#p_house').textContent=fmt(house);$('#p_pot').textContent=fmt(pot);
+  const {place,labels}=standings();
+  const byPlace={};for(const k in place)(byPlace[place[k]]=byPlace[place[k]]||[]).push(T.players[k]);
+  const tb=$('#ptable');tb.innerHTML='';
+  for(let i=0;i<p.places;){
+    const lab=labels.find(l=>i+1>=l[0]&&i+1<l[0]+l[1]);const start=lab?lab[0]:i+1,count=lab?Math.min(lab[1],p.places-start+1):1;
+    const labStr=lab?placeLabel(lab[0],lab[1]):ord(i+1);const who=(byPlace[labStr]||[]).slice().sort();
+    const tie=count>1,each=amts[i]||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${tie?placeLabel(start,count):ord(i+1)}${tie?' <span class="tie">tie</span>':''}</td><td class="money">${pot?Math.round(each/pot*1000)/10:0}%${tie?' ea':''}</td><td class="money">${fmt(each)}${tie?' ea':''}</td><td>${esc(who.join(', '))||'<span class="hint">—</span>'}</td>`;
+    tb.appendChild(tr);i+=count;
+  }
+  const diff=amtTotal-pot;
+  $('#p_pct_total').textContent=pot?Math.round(amtTotal/pot*1000)/10+'%':'';
+  $('#p_amt_total').innerHTML=fmt(amtTotal)+(diff?` <span class="err">(${diff>0?fmt(diff)+' over':fmt(-diff)+' under'} the pot)</span>`:'');
+  const st=$('#standings');st.innerHTML='';
+  const entries=Object.entries(place).sort((a,b)=>parseInt(a[1])-parseInt(b[1])||T.players[a[0]].localeCompare(T.players[b[0]]));
+  for(const [k,lab] of entries){const d=document.createElement('div');d.innerHTML=`<b>${lab}</b> ${esc(T.players[k])}`;st.appendChild(d);}
+  const alive=T.players.length-entries.length;
+  if(alive>0){const d=document.createElement('div');d.className='hint';d.textContent=`${alive} still playing`;st.appendChild(d);}
+}
+function fmt(n){return '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- actions ---------- */
+function pushHistory(snapshot){T.history.push(snapshot||JSON.stringify(T.results));if(T.history.length>200)T.history.shift();}
+function setWinner(id,slot){
+  const m=M.byId[id];pushHistory();
+  T.results[id]={w:slot,a:m.p1,b:m.p2};render();
+}
+function clearMatch(id){
+  const m=M.byId[id];if(!m||!T.results[id])return;
+  const snapshot=JSON.stringify(T.results);const before=Object.keys(T.results).length;
+  delete T.results[id];compute();                 // compute() prunes every later result that depended on this one
+  const dependents=before-1-Object.keys(T.results).length;
+  if(dependents>0&&!confirm(`Reset ${m.label} (${name(m.p1)} vs ${name(m.p2)})?\n\nThis also clears ${dependents} later result${dependents===1?'':'s'} that depended on it. Those matches will need to be re-entered.\n\n(Undo can bring it all back.)`)){
+    T.results=JSON.parse(snapshot);compute();return;
+  }
+  pushHistory(snapshot);render();
+}
+const BAK='poolbracket.bak';
+function save(){
+  if(VIEWER)return;
+  schedulePush();
+  try{
+    const s=JSON.stringify(T);localStorage.setItem(KEY,s);
+    // rolling backups: keep the last 20 distinct states
+    let b=[];try{b=JSON.parse(localStorage.getItem(BAK)||'[]');}catch(e){}
+    const res=JSON.stringify(T.results);
+    if(!b.length||b[0].res!==res){b.unshift({t:Date.now(),res,n:Object.keys(T.results).length,data:JSON.stringify({...T,history:[]})});b=b.slice(0,20);localStorage.setItem(BAK,JSON.stringify(b));}
+  }catch(e){}
+}
+function showBackups(){
+  let b=[];try{b=JSON.parse(localStorage.getItem(BAK)||'[]');}catch(e){}
+  if(!b.length){alert('No backups yet.');return;}
+  const lines=b.map((x,i)=>`${i+1}. ${new Date(x.t).toLocaleString()} — ${x.n} results recorded`).join('\n');
+  const pick=prompt('Automatic backups (newest first). Enter a number to restore, or Cancel:\n\n'+lines);
+  const i=parseInt(pick,10)-1;if(!(i>=0&&i<b.length))return;
+  const t=JSON.parse(b[i].data);t.history=t.history||[];
+  if(T)t.history=[...T.history,JSON.stringify(T.results)].slice(-200);
+  T=t;render();
+}
+// "Chad 7", "Chad SL7", "Chad - 7", "Chad, 7"  ->  {name:'Chad', sl:7}
+function parseEntrant(line){
+  const m=line.match(/^(.*?\S)(?:\s*[,\-–:]\s*|\s+)(?:SL\s*)?([1-9])\s*$/i);   // level must be set apart from the name: "Chad 7", "Chad, SL7"
+  if(m&&m[1].trim())return{name:m[1].trim(),sl:+m[2]};
+  return{name:line.trim(),sl:null};
+}
+// Arrange entrants into seed positions. Random: a plain shuffle. Skill: sort by level (ties shuffled) and fill the
+// round-1 games top to bottom, so each game and each pair of neighbouring games is as close in skill as the field allows;
+// bye games (fixed by the bracket structure) take a single player from wherever they fall in that order.
+function arrange(entrants,mode,N){
+  const P=entrants.length;
+  if(mode==='listed'){                                                  // fill round-1 spots top to bottom in list order, skipping bye spots
+    const order=seedOrder(N),players=new Array(P);let q=0;
+    for(const sd of order)if(sd<=P)players[sd-1]=entrants[q++];
+    return players;
+  }
+  if(mode!=='skill')return shuffle(entrants.slice());
+  // Skill bands: 1-3, 4-5, 6-9. Fully random inside a band; bands are kept apart and only mix where the counts force it.
+  const band=e=>e.sl>=6?3:e.sl>=4?2:1;
+  const pool=shuffle(entrants.slice()).sort((a,b)=>band(b)-band(a));   // shuffle first, then a stable sort by band = random within band
+  // Work in groups of four round-1 slots (the two games that feed one round-2 match). Each group takes the next
+  // players by skill, then shuffles them inside the group so a bye in that group lands on a random member of the
+  // band rather than always on its highest level.
+  const order=seedOrder(N),players=new Array(P);let q=0;
+  for(let g=0;g<N/4;g++){
+    const four=order.slice(4*g,4*g+4);
+    const byeSlots=[],playSlots=[];
+    for(let i=0;i<4;i+=2){const a=four[i],b=four[i+1];if(a<=P&&b<=P){playSlots.push(a,b);}else if(a<=P)byeSlots.push(a);else if(b<=P)byeSlots.push(b);}
+    const take=shuffle(pool.slice(q,q+byeSlots.length+playSlots.length));q+=take.length;
+    byeSlots.forEach((sd,i)=>players[sd-1]=take[i]);                              // byes: random members of the group
+    const rest=take.slice(byeSlots.length).sort((a,b)=>band(b)-band(a));           // the rest pair up by band where the group is mixed
+    playSlots.forEach((sd,i)=>players[sd-1]=rest[i]);
+  }
+  return players;
+}
+function shuffle(a){const r=new Uint32Array(a.length);crypto.getRandomValues(r);for(let i=a.length-1;i>0;i--){const j=r[i]%(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startTournament(){
+  const raw=$('#names').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const mode=$('#drawMode').value;
+  const seen=new Set(),ents=[];
+  // Only read levels when the skill draw is on or every line clearly has one, so names like "Player 13" stay intact
+  const parsed=raw.map(parseEntrant),useSL=mode==='skill'||parsed.every(e=>e.sl);
+  for(const line of raw){const e=useSL?parseEntrant(line):{name:line.trim(),sl:null};let k=e.name,c=2;while(seen.has(k))k=`${e.name} (${c++})`;seen.add(k);ents.push({name:k,sl:e.sl});}
+  if(ents.length<3){$('#err').textContent='Need at least 3 players.';return;}
+  if(ents.length>64){$('#err').textContent='Max 64 players.';return;}
+  if(mode==='skill'){const missing=ents.filter(e=>!e.sl);if(missing.length){$('#err').textContent=`Skill-grouped draw needs a level (1–9) after every name — missing for: ${missing.map(e=>e.name).join(', ')}`;return;}}
+  $('#err').textContent='';
+  const fmt=$('#fmtMode').value;
+  SETUP_PAY.refresh();const payErr=SETUP_PAY.valid();if(payErr){$('#err').textContent=payErr+' Fix the custom payout split under Money.';return;}
+  const plan=bracketPlan(ents.length,false);
+  const arranged=arrange(ents,mode,plan.N);
+  T={name:$('#tname').value.trim(),date:$('#tdate').value,game:$('#game').value,
+     raceW:+$('#raceW').value||1,raceL:+$('#raceL').value||1,raceF:+$('#raceF').value||1,
+     draw:mode,entrants:ents,players:arranged.map(e=>e.name),skills:arranged.map(e=>e.sl),N:plan.N,k:plan.k,format:fmt,layout:+$('#layoutMode').value||2,results:{},history:[],
+     payout:JSON.parse(JSON.stringify(SETUP_PAY.cfg))};
+  render();
+}
+// Everyone must be marked Paid before the bracket can be drawn
+$('#start').onclick=()=>{if(!$('#rsTextWrap').hidden)rosterTextMode(false);
+  const un=ROSTER.filter(r=>!r.paid);
+  if(ROSTER.length>=3&&un.length){
+    $('#err').textContent=`Can't draw the bracket yet — ${un.length} player${un.length===1?" hasn't":"s haven't"} paid: ${un.map(r=>parseEntrant(r.line).name).join(', ')}. Tick Paid, or ✕ anyone who isn't playing.`;
+    let first=null;document.querySelectorAll('#rsList .rs-row').forEach(row=>{if(!ROSTER[+row.dataset.i].paid){row.classList.add('unpaid');first=first||row;}});
+    if(first)first.scrollIntoView({block:'nearest',behavior:'smooth'});return;}
+  startTournament();};
+function updateHint(){
+  const P=$('#names').value.split(/\r?\n/).filter(s=>s.trim()).length;$('#pcount').textContent=P;
+  if(typeof SETUP_PAY!=='undefined')SETUP_PAY.refresh();
+  const h=$('#byehint');if(P<3){h.textContent='';return;}
+  const std=bracketPlan(P,false);
+  h.textContent=std.N===P?`Full ${std.N}-player bracket, no byes.`:`${std.N}-player bracket, ${std.N-P} bye${std.N-P===1?'':'s'} (bye players start in round 2).`;
+}
+$('#names').oninput=updateHint;
+
+/* ---------- Player roster: Paid boxes, one-click removal; the hidden text list (#names) stays the source the draw reads ---------- */
+let ROSTER=[],RS_LAST=null;
+try{ROSTER=(JSON.parse(localStorage.getItem('pb.roster')||'[]')||[]).filter(r=>r&&r.line);}catch(e){ROSTER=[];}
+const rsKey=line=>parseEntrant(line).name.toLowerCase();
+function rosterSync(){$('#names').value=ROSTER.map(r=>r.line).join('\n');try{localStorage.setItem('pb.roster',JSON.stringify(ROSTER));}catch(e){}updateHint();paidCount();}
+function paidCount(){const P=ROSTER.length,pd=ROSTER.filter(r=>r.paid).length;if(pd===P&&/^Can't draw the bracket yet/.test($('#err').textContent))$('#err').textContent='';
+  $('#paidcount').innerHTML=P?` · <b>${pd} paid</b>${P-pd?` · <i>${P-pd} not paid</i>`:''}`:'';}
+function setRoster(list){ROSTER=list;RS_LAST=null;renderRoster();rosterSync();}
+function rosterAdd(text){const lines=String(text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);if(!lines.length)return;
+  lines.forEach(line=>ROSTER.push({line,paid:false}));RS_LAST=null;renderRoster();rosterSync();
+  const L=$('#rsList');L.scrollTop=L.scrollHeight;}
+function renderRoster(){
+  const L=$('#rsList');
+  L.innerHTML=ROSTER.length?ROSTER.map((r,i)=>`<div class="rs-row${r.paid?' paid':''}" data-i="${i}"><span class="rs-n">${i+1}</span>
+    <input class="rs-name" value="${esc(r.line)}" title="Click to fix the name or skill level"><label class="rs-paid" title="Paid"><input type="checkbox"${r.paid?' checked':''}></label>
+    <button type="button" class="rs-x" title="Remove ${esc(r.line)} from the list">✕</button></div>`).join(''):'<p class="hint rs-empty">No players yet.</p>';
+  L.querySelectorAll('.rs-row').forEach(row=>{const i=+row.dataset.i;
+    row.querySelector('.rs-paid input').onchange=e=>{ROSTER[i].paid=e.target.checked;row.classList.toggle('paid',ROSTER[i].paid);row.classList.remove('unpaid');rosterSync();};
+    const nm=row.querySelector('.rs-name');
+    nm.onchange=()=>{const v=nm.value.trim();if(!v){removeAt(i);return;}ROSTER[i].line=v;rosterSync();};
+    nm.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();nm.blur();}};
+    row.querySelector('.rs-x').onclick=()=>removeAt(i);});
+  const u=$('#rsUndo');
+  if(RS_LAST){u.innerHTML=`<span>Removed <b>${esc(RS_LAST.r.line)}</b>.</span><button type="button">↶ Undo</button>`;
+    u.querySelector('button').onclick=()=>{ROSTER.splice(Math.min(RS_LAST.i,ROSTER.length),0,RS_LAST.r);RS_LAST=null;renderRoster();rosterSync();};}
+  else u.innerHTML='';
+}
+function removeAt(i){const r=ROSTER.splice(i,1)[0];RS_LAST={i,r};renderRoster();rosterSync();}
+function rosterFromText(){const paid=new Set(ROSTER.filter(r=>r.paid).map(r=>rsKey(r.line)));
+  ROSTER=$('#names').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>({line,paid:paid.has(rsKey(line))}));}
+function rosterTextMode(on){if(!on)rosterFromText();RS_LAST=null;
+  $('#roster').hidden=on;$('#rsTextWrap').hidden=!on;renderRoster();rosterSync();if(on)$('#names').focus();}
+$('#rsAdd').onclick=()=>{const i=$('#rsNew');rosterAdd(i.value);i.value='';i.focus();};
+$('#rsNew').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#rsAdd').click();}};
+$('#rsNew').addEventListener('paste',e=>{const t=(e.clipboardData||window.clipboardData).getData('text');
+  if(/\r?\n/.test(t.trim())){e.preventDefault();rosterAdd(t);$('#rsNew').value='';}});
+$('#rsText').onclick=()=>rosterTextMode(true);
+$('#rsDone').onclick=()=>rosterTextMode(false);
+// Demo players for a practice tournament: "Player #1…" or random names, optional skill levels, all marked Paid
+const DEMO_FIRST=['Mike','Chris','Dave','Steve','Tony','Jason','Kevin','Brian','Eric','Matt','Ryan','Josh','Nick','Dan','Rob','Tom','Jeff','Scott','Greg','Shawn','Amy','Sarah','Jess','Lisa','Kim','Nicole','Tina','Dawn','Rachel','Megan','Carlos','Luis','Andre','Marcus','Derek','Travis','Wes','Cody','Gina','Tara'];
+const DEMO_LAST=['Miller','Johnson','Smith','Brown','Davis','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Garcia','Martinez','Robinson','Clark','Lewis','Walker','Hall','Allen','Young','King','Wright','Lopez','Hill','Scott','Green','Adams','Baker','Nelson','Carter','Mitchell','Perez','Roberts','Turner','Phillips','Campbell'];
+function demoFill(named){
+  let n=Math.min(64,Math.max(3,Math.round(+$('#demoN').value||16)));$('#demoN').value=n;
+  if(ROSTER.length&&!confirm(`Replace the ${ROSTER.length} player${ROSTER.length===1?'':'s'} on the list with ${n} demo players?`))return;
+  if(!$('#rsTextWrap').hidden){$('#roster').hidden=false;$('#rsTextWrap').hidden=true;}
+  const sl=$('#demoSL').checked,lo=$('#game').value==='8-Ball'?2:1,hi=$('#game').value==='8-Ball'?7:9,used=new Set(),out=[];
+  for(let i=1;i<=n;i++){let name;
+    if(named){do name=DEMO_FIRST[brRandInt(DEMO_FIRST.length)]+' '+DEMO_LAST[brRandInt(DEMO_LAST.length)];while(used.has(name));used.add(name);}
+    else name='Player #'+i;
+    out.push({line:sl?`${name} ${lo+brRandInt(hi-lo+1)}`:name,paid:true});}
+  setRoster(out);
+}
+$('#demoNum').onclick=()=>demoFill(false);$('#demoNames').onclick=()=>demoFill(true);
+renderRoster();rosterSync();
+try{$('#drawMode').value=localStorage.getItem('pb.draw')||'random';}catch(e){}
+$('#drawMode').onchange=e=>{try{localStorage.setItem('pb.draw',e.target.value);}catch(_){}};
+try{$('#layoutMode').value=localStorage.getItem('pb.layout')||'2';}catch(e){}
+function syncFormatUI(){const F=$('#fmtMode').value;$('#layoutWrap').style.display=F==='double'?'':'none';$('#raceL').parentElement.style.display=F==='single'?'none':'';
+  $('#raceL').parentElement.firstChild.textContent=F==='modified'?'2nd-Chance Race To':'Losers Race To';updateHint();}
+try{$('#fmtMode').value=localStorage.getItem('pb.fmt')||'double';}catch(e){}
+$('#fmtMode').onchange=e=>{try{localStorage.setItem('pb.fmt',e.target.value);}catch(_){}syncFormatUI();};
+syncFormatUI();
+$('#layoutMode').onchange=e=>{try{localStorage.setItem('pb.layout',e.target.value);}catch(_){}};
+function applyView(all){
+  document.body.classList.toggle('showall',all);
+  $('#viewToggle').textContent=all?'▤ Standard View':'⬌ Show All';
+  try{localStorage.setItem('poolbracket.view',all?'all':'std');}catch(e){}
+  FIT_SHRINK=0;if(T&&M)render();
+}
+$('#viewToggle').onclick=()=>applyView(!document.body.classList.contains('showall'));
+$('#boardBtn').onclick=()=>setBoard(true);$('#boardExit').onclick=()=>setBoard(false);$('#cmpExit').onclick=()=>setBoard(false);
+document.querySelectorAll('#cmpBar .tab').forEach(b=>b.onclick=()=>{CMP_TAB=b.dataset.tab;try{localStorage.setItem('pb.tab',CMP_TAB);}catch(e){}window.scrollTo(0,0);if(T&&M)render();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isBoard()&&!VIEWER)setBoard(false);});
+try{applyView(localStorage.getItem('poolbracket.view')==='all');}catch(e){}
+$('#undo').onclick=()=>{if(!T.history.length)return;T.results=JSON.parse(T.history.pop());render();};
+$('#redraw').onclick=()=>{if(Object.keys(T.results).length)return;
+  if(!confirm('Redraw the bracket?\n\nEvery matchup changes and any pairings you have already announced are void. This cannot be undone.'))return;
+  if(T.entrants){const a=arrange(T.entrants,T.draw,T.N);T.players=a.map(e=>e.name);T.skills=a.map(e=>e.sl);}else shuffle(T.players);render();};
+$('#newT').onclick=()=>{if(!confirm('Start a new tournament? The current bracket will be cleared (save it to a file first if you need it).'))return;
+  setRoster([]);if(!$('#rsTextWrap').hidden)rosterTextMode(false);applySetupDefaults();$('#tdate').value=new Date().toISOString().slice(0,10);
+  T=null;localStorage.removeItem(KEY);$('#tourney').hidden=true;$('#tbar').hidden=true;$('#setup').hidden=false;$('#hdrsub').textContent='Double Elimination · 8-Ball / 9-Ball';};
+$('#export').onclick=()=>{const b=new Blob([JSON.stringify(T,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`${(T.name||'bracket').replace(/[^\w\- ]+/g,'')}${T.date?'-'+T.date:''}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+$('#importBtn').onclick=()=>$('#importFile').click();
+$('#backups').onclick=showBackups;$('#backups2').onclick=showBackups;$('#importBtn2').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const t=JSON.parse(r.result);if(!t.players||!t.N)throw 0;T=t;T.history=T.history||[];render();}catch(_){alert('Not a valid bracket file.');}};r.readAsText(f);e.target.value='';};
+$('#payEdit').onclick=e=>{e.preventDefault();if(T&&!VIEWER)editPayouts();};
+// Setup screen payout editor; its choices are remembered for the next tournament
+var SETUP_PAY=(()=>{let c=defaultPayCfg();try{const s=JSON.parse(localStorage.getItem('pb.payCfg')||'null');if(s)c=Object.assign(c,s);}catch(e){}
+  const cnt=()=>$('#names').value.split(/\r?\n/).filter(x=>x.trim()).length;
+  return payoutEditor($('#setupPay'),c,cnt,()=>$('#fmtMode').value,cfg=>{try{localStorage.setItem('pb.payCfg',JSON.stringify(cfg));}catch(e){}});})();
+// Standard starting choices for every new tournament (and first launch); fees and races keep what was used last time
+function applySetupDefaults(){$('#fmtMode').value='double';$('#layoutMode').value='4';$('#drawMode').value='random';
+  try{localStorage.setItem('pb.fmt','double');localStorage.setItem('pb.layout','4');localStorage.setItem('pb.draw','random');}catch(e){}
+  Object.assign(SETUP_PAY.cfg,{struct:'25',split:'rec',mode:'pct',round:5});try{localStorage.setItem('pb.payCfg',JSON.stringify(SETUP_PAY.cfg));}catch(e){}
+  syncFormatUI();}
+applySetupDefaults();
+$('#tdate').value=new Date().toISOString().slice(0,10);
+
+/* ---------- Break & Run pot: ticket sales, prize wheel, per-ball payouts ---------- */
+const BR_KEY='pb.br';let BR=null,BRUI=null;
+function brLoad(){try{BR=JSON.parse(localStorage.getItem(BR_KEY)||'null');}catch(e){}
+  if(!BR)BR={};BR=Object.assign({balls:10,price:5,added:0,tickets:{},slices:[],out:[],history:[],rmMode:'one',rot:0},BR);
+  if(!['all','one','none'].includes(BR.rmMode))BR.rmMode='one';}
+// What each draw takes off the wheel, worked out from the draw history and the current rule
+function brUsed(){const u={};for(const h of BR.history){if(BR.rmMode==='all')u[h.name]=Infinity;else if(BR.rmMode==='one'&&u[h.name]!==Infinity)u[h.name]=(u[h.name]||0)+1;}return u;}
+function brSave(){try{localStorage.setItem(BR_KEY,JSON.stringify(BR));}catch(e){}}
+function brTickets(){return Object.values(BR.tickets).reduce((a,b)=>a+(+b||0),0);}
+function brPot(){return brTickets()*(+BR.price||0)+(+BR.added||0);}
+// Whole dollars per ball from what's still in the pot (recalculated after every payout); the odd dollars go on the last ball
+function brBallValues(){const pot=brRemaining(),n=BR.balls,per=Math.floor(pot/n);const v=Array(n).fill(per);v[n-1]=pot-per*(n-1);return v;}
+function brPaid(){return BR.history.reduce((a,h)=>a+h.paid,0);}
+function brRemaining(){return Math.max(0,brPot()-brPaid());}
+function brRandInt(n){const r=new Uint32Array(1);crypto.getRandomValues(r);return r[0]%n;}
+// One slice per ticket for everyone still on the wheel, shuffled, then nudged so the same name rarely sits side by side
+function brBuildSlices(){
+  const L=[],used=brUsed();for(const [n,c] of Object.entries(BR.tickets)){const k=Math.max(0,(+c||0)-(used[n]||0));for(let i=0;i<k;i++)L.push(n);}
+  shuffle(L);const N=L.length;
+  const ok=(a,p)=>N<3||(a[p]!==a[(p+N-1)%N]&&a[p]!==a[(p+1)%N]);
+  for(let pass=0;pass<4;pass++)for(let i=0;i<N;i++){if(ok(L,i))continue;
+    for(let k=0;k<N;k++){if(L[k]===L[i])continue;[L[i],L[k]]=[L[k],L[i]];if(ok(L,i)&&ok(L,k))break;[L[i],L[k]]=[L[k],L[i]];}}
+  BR.slices=L;
+}
+function brColors(){const names=Object.keys(BR.tickets).sort();const m={};names.forEach((n,i)=>m[n]=`hsl(${Math.round(i*137.508)%360} 62% 42%)`);return m;}
+function brSourceNames(){
+  if(T&&T.players)return T.players.slice();
+  return $('#names').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(l=>parseEntrant(l).name);
+}
+function openBreakRun(){
+  brLoad();
+  if(!BR.slices.length&&brTickets())brBuildSlices();
+  const ov=document.createElement('div');ov.className='brov';
+  ov.innerHTML=`<div class="brbox">
+    <div class="brhead"><h3>🎱 Break &amp; Run Pot</h3><span class="sub" id="brSum"></span><span style="flex:1"></span><button type="button" id="brClose">Close</button></div>
+    <div class="brgrid">
+      <div class="brleft">
+        <div class="row">
+          <label>Game<select id="brBalls"><option value="9">9-Ball (9 Balls)</option><option value="10">10-Ball (10 Balls)</option></select></label>
+          <label>Ticket Price $<input type="number" id="brPrice" min="0" step="1"></label>
+          <label>Added / Carried Over $<input type="number" id="brAdded" min="0" step="1"></label>
+        </div>
+        <div class="row"><label>After a Draw<select id="brRm"><option value="all">Take the Player Off the Wheel (All Their Tickets)</option><option value="one">Take Off Only the Ticket That Was Drawn</option><option value="none">Leave Every Ticket on the Wheel</option></select></label></div>
+        <div class="brvals" id="brVals"></div>
+        <h4>Tickets</h4>
+        <div class="brlist" id="brList"></div>
+        <div class="row" style="margin-top:8px"><select id="brPick" style="flex:1;min-width:180px"></select><button type="button" id="brAddAll">Add All Players</button></div>
+        <h4>Draws</h4>
+        <div id="brHist" class="brhist"></div>
+      </div>
+      <div class="brright">
+        <div class="brwheel"><canvas id="brCanvas"></canvas><div class="brptr"></div></div>
+        <div class="brnow" id="brNow">&nbsp;</div>
+        <div class="row" style="justify-content:center"><button type="button" class="primary" id="brSpin" style="font-size:17px;padding:10px 28px">Spin</button></div>
+        <p class="hint" style="text-align:center;margin:6px 0 0">…or grab the wheel and flick it. Every ticket has the same chance.</p>
+        <div id="brResult"></div>
+      </div>
+    </div>
+    <div class="row" style="margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)"><button type="button" id="brNewPot" class="danger">New Pot…</button></div></div>`;
+  document.body.appendChild(ov);
+  const q=s=>ov.querySelector(s);
+  const cv=q('#brCanvas'),ctx=cv.getContext('2d');let spinning=false,size=0;
+  function sizeCanvas(){const box=q('.brwheel');size=Math.max(220,Math.min(560,box.clientWidth));const d=window.devicePixelRatio||1;
+    cv.width=size*d;cv.height=size*d;cv.style.width=size+'px';cv.style.height=size+'px';ctx.setTransform(d,0,0,d,0,0);drawWheel();}
+  function sliceAt(rot){const N=BR.slices.length;if(!N)return -1;const seg=2*Math.PI/N;let a=(-Math.PI/2-rot)%(2*Math.PI);if(a<0)a+=2*Math.PI;return Math.floor(a/seg)%N;}
+  function drawWheel(){
+    if(size<50)return;                                                   // not laid out yet
+    const N=BR.slices.length,r=size/2-6,cx=size/2,cy=size/2,col=brColors();ctx.clearRect(0,0,size,size);
+    if(!N){ctx.fillStyle='#1e2a23';ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();ctx.fillStyle='#8fa396';ctx.font='15px Segoe UI,sans-serif';ctx.textAlign='center';ctx.fillText('Add Tickets to Fill the Wheel',cx,cy);q('#brNow').textContent='';return;}
+    const seg=2*Math.PI/N;
+    for(let i=0;i<N;i++){const a0=BR.rot+i*seg;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a0,a0+seg);ctx.closePath();ctx.fillStyle=col[BR.slices[i]]||'#2c3b32';ctx.fill();
+      if(N<=180){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.stroke();}
+      const fs=Math.max(8,Math.min(16,seg*r*0.55));if(seg*r>=9){ctx.save();ctx.translate(cx,cy);ctx.rotate(a0+seg/2);ctx.fillStyle='#fff';ctx.font=`600 ${fs}px Segoe UI,sans-serif`;ctx.textAlign='right';ctx.textBaseline='middle';
+        let t=BR.slices[i];const maxW=r*0.72;while(ctx.measureText(t).width>maxW&&t.length>3)t=t.slice(0,-2)+'…';ctx.fillText(t,r-10,0);ctx.restore();}}
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.lineWidth=6;ctx.strokeStyle='#e0b35a';ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,Math.max(18,r*0.11),0,7);ctx.fillStyle='#0b0f0c';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#e0b35a';ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font=`bold ${Math.max(12,r*0.09)}px Segoe UI,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('B&R',cx,cy+1);
+    const k=sliceAt(BR.rot);q('#brNow').textContent=k>=0?BR.slices[k]:'\u00a0';
+  }
+  // Spin: the landing ticket is chosen by the secure random generator; how hard you flick sets how fast and long it spins
+  function spin(omega){
+    if(spinning||!BR.slices.length)return;spinning=true;q('#brResult').innerHTML='';setBusy(true);
+    const N=BR.slices.length,seg=2*Math.PI/N,t=brRandInt(N),f=0.15+0.7*(brRandInt(1000)/1000);
+    const dir=omega<0?-1:1,w=Math.min(40,Math.max(6,Math.abs(omega)));
+    const turns=Math.round(Math.min(16,Math.max(4,w*0.55))),dur=Math.min(12000,Math.max(4500,2600+w*320));
+    const want=-Math.PI/2-(t+f)*seg,two=2*Math.PI;let delta=((want-BR.rot)%two+two)%two;if(dir<0)delta=delta-two;
+    const from=BR.rot,to=from+dir*turns*two+delta,t0=performance.now();
+    (function frame(now){const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);BR.rot=from+(to-from)*e;drawWheel();
+      if(p<1)requestAnimationFrame(frame);else{BR.rot=((BR.rot%two)+two)%two;spinning=false;setBusy(false);brSave();landed(BR.slices[t]);}})(t0);
+  }
+  function setBusy(b){['#brSpin','#brPrice','#brAdded','#brBalls','#brAddAll','#brNewPot','#brPick'].forEach(s=>{const e=q(s);if(e)e.disabled=b;});ov.querySelectorAll('.brlist button,.brlist input').forEach(e=>e.disabled=b);}
+  function landed(name){
+    const vals=brBallValues(),rem=brRemaining();let cum=0;
+    const btns=vals.map((v,i)=>{cum+=v;const pay=Math.min(cum,rem);return `<button type="button" data-k="${i+1}" title="Made balls 1–${i+1}: ${fmt(pay)}">${i+1}<small>${fmt(pay)}</small></button>`;}).join('');
+    q('#brResult').innerHTML=`<div class="brwin"><div class="brwname">🎉 ${esc(name)}</div>
+      <div class="hint">Takes the break &amp; run attempt. How many balls were made before the miss?</div>
+      <div class="brballs"><button type="button" data-k="0">0<small>$0</small></button>${btns}</div>
+      <div class="row" style="justify-content:center;margin-top:6px"><button type="button" id="brSkip">Don't Record This Draw</button></div></div>`;
+    q('#brResult').querySelectorAll('.brballs button').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;let cum=0;vals.slice(0,k).forEach(v=>cum+=v);
+      const paid=Math.min(cum,brRemaining());BR.history.push({name,balls:k,of:BR.balls,paid,t:Date.now()});
+      brBuildSlices();brSave();q('#brResult').innerHTML='';paint();});
+    q('#brSkip').onclick=()=>{q('#brResult').innerHTML='';};
+  }
+  function paint(){
+    q('#brBalls').value=String(BR.balls);q('#brPrice').value=BR.price;q('#brAdded').value=BR.added;q('#brRm').value=BR.rmMode;const used=brUsed();
+    const vals=brBallValues(),pot=brPot(),paid=brPaid(),rem=brRemaining();
+    q('#brSum').innerHTML=`${brTickets()} Ticket${brTickets()===1?'':'s'} · Pot <b>${fmt(pot)}</b>${paid?` · Paid ${fmt(paid)} · <b>${fmt(brRemaining())}</b> Left`:''}`;
+    q('#brVals').innerHTML=!pot?'<span class="hint">Set a ticket price and add tickets.</span>':!rem?'<span class="hint">The pot has been paid out.</span>':(paid?'Next Draw: ':'')+`<b>${fmt(vals[0])}</b> Per Ball`+(vals[BR.balls-1]!==vals[0]?` · Last Ball (${BR.balls}) <b>${fmt(vals[BR.balls-1])}</b>`:'')+` · Full Run <b>${fmt(rem)}</b>`;
+    const col=brColors(),names=Object.keys(BR.tickets).sort((a,b)=>a.localeCompare(b));
+    q('#brList').innerHTML=names.length?names.map(n=>{const c=+BR.tickets[n]||0,gone=Math.min(c,used[n]||0),out=c>0&&gone>=c,tag=used[n]===Infinity?'Drawn':gone?(out?'All Used':gone+' Used'):'';
+      return `<div class="brrow${out?' out':''}"><span class="sw" style="background:${col[n]}"></span><span class="nm">${esc(n)}${tag?` <span class="hint">(${tag})</span>`:''}</span>
+        <button type="button" data-n="${esc(n)}" data-d="-1">−</button><input type="number" min="0" value="${c}" data-n="${esc(n)}"><button type="button" data-n="${esc(n)}" data-d="1">+</button>
+        <span class="amt">${fmt(c*(+BR.price||0))}</span><button type="button" class="x" data-n="${esc(n)}" data-x="1" title="Remove">✕</button></div>`;}).join(''):'<p class="hint">No tickets yet. Add names below, or add everyone in the tournament.</p>';
+    q('#brList').querySelectorAll('button[data-d]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;BR.tickets[n]=Math.max(0,(+BR.tickets[n]||0)+(+b.dataset.d));changed();});
+    q('#brList').querySelectorAll('input[data-n]').forEach(i=>i.onchange=()=>{BR.tickets[i.dataset.n]=Math.max(0,Math.round(+i.value||0));changed();});
+    q('#brList').querySelectorAll('button[data-x]').forEach(b=>b.onclick=()=>{const n=b.dataset.n;if((+BR.tickets[n]||0)&&!confirm(`Remove ${n} and their ${BR.tickets[n]} ticket(s)?`))return;delete BR.tickets[n];BR.out=BR.out.filter(x=>x!==n);changed();});
+    const src=brSourceNames();q('#brPick').innerHTML=`<option value="">${src.length?'Choose a Player…':'No Players on the List Yet'}</option>`+src.map(n=>{const c=+BR.tickets[n]||0;return `<option value="${esc(n)}">${esc(n)}${c?` (${c} Ticket${c===1?'':'s'})`:''}</option>`;}).join('');
+    q('#brHist').innerHTML=BR.history.length?BR.history.map((h,i)=>`<div class="brh"><span>Draw ${i+1}</span><b>${esc(h.name)}</b><span>${h.balls===h.of?'Ran the Rack':h.balls+' Ball'+(h.balls===1?'':'s')}</span><span class="amt">${fmt(h.paid)}</span></div>`).join('')+`<div class="row" style="margin-top:6px"><button type="button" id="brUndo">↶ Undo Last Draw</button></div>`:'<p class="hint">No Draws Yet</p>';
+    const u=q('#brUndo');if(u)u.onclick=()=>{const h=BR.history.pop();if(h)BR.out=BR.out.filter(x=>x!==h.name);brBuildSlices();brSave();paint();};
+    q('#brSpin').disabled=!BR.slices.length;
+    drawWheel();
+  }
+  function changed(){brBuildSlices();brSave();paint();}
+  q('#brBalls').onchange=e=>{BR.balls=+e.target.value;brSave();paint();};
+  q('#brPrice').onchange=e=>{BR.price=Math.max(0,+e.target.value||0);brSave();paint();};
+  q('#brAdded').onchange=e=>{BR.added=Math.max(0,+e.target.value||0);brSave();paint();};
+  q('#brRm').onchange=e=>{BR.rmMode=e.target.value;changed();};
+  const addName=n=>{n=(n||'').trim();if(!n)return;if(!(n in BR.tickets))BR.tickets[n]=0;};
+  q('#brPick').onchange=e=>{const n=e.target.value;if(!n)return;addName(n);BR.tickets[n]=(+BR.tickets[n]||0)+1;changed();};
+  q('#brAddAll').onclick=()=>{const src=brSourceNames();if(!src.length){alert('Add players to the tournament first.');return;}src.forEach(addName);changed();};
+  q('#brNewPot').onclick=()=>{const rem=brHistoryOrPot();
+    if(!confirm('Start a new Break & Run pot? Tickets and draws will be cleared.'))return;
+    const carry=rem>0&&confirm(`Carry the ${fmt(rem)} left over into the new pot?`);
+    BR.tickets={};BR.history=[];BR.out=[];BR.slices=[];BR.balls=10;BR.rmMode='one';BR.added=carry?rem:0;brSave();paint();};
+  function brHistoryOrPot(){return brRemaining();}
+  q('#brSpin').onclick=()=>spin(10+brRandInt(80)/10);
+  q('#brClose').onclick=()=>{if(spinning)return;ov.remove();window.removeEventListener('resize',sizeCanvas);};
+  // Grab and flick: the wheel follows your finger; letting go fast spins it, letting go slowly just leaves it there
+  let drag=null;
+  const ang=e=>{const r=cv.getBoundingClientRect();return Math.atan2(e.clientY-r.top-r.height/2,e.clientX-r.left-r.width/2);};
+  cv.addEventListener('pointerdown',e=>{if(spinning||!BR.slices.length)return;cv.setPointerCapture(e.pointerId);const a=ang(e);drag={last:a,rot0:BR.rot,samples:[[performance.now(),a]]};});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const a=ang(e);let d=a-drag.last;if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;BR.rot+=d;drag.last=a;
+    drag.samples.push([performance.now(),a]);if(drag.samples.length>6)drag.samples.shift();drawWheel();});
+  const release=e=>{if(!drag)return;const s=drag.samples;drag=null;if(s.length<2){brSave();return;}
+    const [t1,a1]=s[0],[t2,a2]=s[s.length-1];let d=a2-a1;if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;const w=d/Math.max(0.016,(t2-t1)/1000);
+    if(Math.abs(w)>3)spin(w);else brSave();};
+  cv.addEventListener('pointerup',release);cv.addEventListener('pointercancel',release);
+  window.addEventListener('resize',sizeCanvas);
+  paint();requestAnimationFrame(sizeCanvas);
+}
+$('#brBtn').onclick=openBreakRun;$('#brBtn2').onclick=openBreakRun;
+
+/* ---------- in-page dialog ---------- */
+function dialog({title,body,buttons,wide}){
+  return new Promise(res=>{
+    const ov=document.createElement('div');ov.className='overlay';
+    const d=document.createElement('div');d.className='dlg';if(wide)d.style.maxWidth='820px';
+    d.innerHTML=`<h3>${esc(title)}</h3>`;
+    if(typeof body==='string'){const b=document.createElement('div');b.innerHTML=body;d.appendChild(b);}else if(body)d.appendChild(body);
+    const acts=document.createElement('div');acts.className='acts';
+    for(const b of buttons||[{label:'Close',value:null}]){const bt=document.createElement('button');bt.textContent=b.label;if(b.primary)bt.className='primary';if(b.danger)bt.className='danger';
+      bt.onclick=()=>{ov.remove();res(b.value);};acts.appendChild(bt);}
+    d.appendChild(acts);ov.appendChild(d);ov.onclick=e=>{if(e.target===ov){ov.remove();res(null);}};
+    document.body.appendChild(ov);
+  });
+}
+
+/* ---------- broadcast (Firebase Realtime Database over its REST/streaming API) ---------- */
+const QS=new URLSearchParams(location.search);
+const VIEWER=QS.has('watch');
+const BC={db:'',host:'',timer:null,status:'',last:0,err:'',es:null,poll:null,retry:null};
+try{BC.db=localStorage.getItem('pb.db')||'';BC.host=localStorage.getItem('pb.host')||'';}catch(e){}
+const DEFAULT_DB=(document.querySelector('meta[name="pb-default-db"]')||{}).content||'';
+if(!BC.db&&DEFAULT_DB)BC.db=DEFAULT_DB;                                   // built-in database: no setup needed
+const DEFAULT_HOST=(document.querySelector('meta[name="pb-default-host"]')||{}).content||'';
+if(!BC.host&&DEFAULT_HOST&&!VIEWER)BC.host=DEFAULT_HOST;                   // built-in viewer page: the file alone is enough
+// The hosted copy already knows its own address, so it can double as the viewer page without being told
+if(!BC.host&&/^https?:$/.test(location.protocol)&&!VIEWER){BC.host=location.origin+location.pathname.replace(/index\.html?$/i,'');try{localStorage.setItem('pb.host',BC.host);}catch(e){}}
+const RULES_JSON=`{
+  "rules": {
+    "t": {
+      "$code": {
+        ".write": "(!data.exists() && newData.child('key').exists()) || newData.child('key').val() === data.child('key').val()",
+        "state": { ".read": true },
+        "key":   { ".read": false }
+      }
+    }
+  }
+}`;
+function dbBase(u){let d=(u!==undefined?u:BC.db||'').trim().replace(/\/+$/,'');if(d&&!/^https?:\/\//.test(d))d=(/^(localhost|127\.)/.test(d)?'http://':'https://')+d;return d;}
+function dbHost(){return dbBase().replace(/^https?:\/\//,'');}
+function genCode(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(n);crypto.getRandomValues(r);return [...r].map(x=>a[x%a.length]).join('');}
+function stateForBroadcast(){const o={...T};delete o.history;delete o.bcast;return o;}
+function watchLink(){const code=T&&T.bcast?T.bcast.code:'XXXXXX';const h=(BC.host||'').trim().replace(/[#?].*$/,'');return (h||'<hosted page URL>')+(h&&!/\/$/.test(h)&&!/\.html?$/i.test(h)?'/':'')+'?watch='+code+'&db='+encodeURIComponent(dbHost());}
+async function pushState(){
+  if(VIEWER||!T||!T.bcast||!dbBase())return;
+  try{
+    const r=await fetch(`${dbBase()}/t/${T.bcast.code}.json`,{method:'PUT',body:JSON.stringify({key:T.bcast.key,state:stateForBroadcast(),updated:Date.now()})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    BC.status='live';BC.last=Date.now();BC.err='';
+  }catch(e){BC.status='error';BC.err=String(e.message||e);clearTimeout(BC.retry);BC.retry=setTimeout(pushState,10000);}
+  renderBcastStatus();
+}
+function schedulePush(){if(VIEWER||!T||!T.bcast)return;clearTimeout(BC.timer);BC.timer=setTimeout(pushState,400);}
+function renderBcastStatus(){
+  const el=$('#bcStatus');if(!el)return;el.className='sub noprint';
+  if(VIEWER){
+    if(BC.status==='live')el.innerHTML=`📡 <b>LIVE</b> · updated ${new Date(BC.last).toLocaleTimeString()}`;
+    else if(BC.status==='waiting'){el.classList.add('wait');el.innerHTML='📡 <b>Waiting for the tournament director to start broadcasting…</b> <span class="sub">(code '+esc(QS.get('watch')||'')+')</span>';}
+    else if(BC.status==='viewerror'){el.classList.add('err');el.innerHTML='📡 <b>Problem:</b> '+esc(BC.err);}
+    else{el.classList.add('err');el.innerHTML='📡 <b>Reconnecting…</b>';}
+    let vb=$('#vbadge');if(!vb){vb=document.createElement('div');vb.id='vbadge';document.body.appendChild(vb);}
+    vb.className=el.className.replace('sub','').replace('noprint','').trim();vb.innerHTML=el.innerHTML+(T&&T.name?' · '+esc(T.name):'');
+    const cs=$('#cmpStatus');if(cs){cs.className=vb.className;cs.innerHTML=vb.innerHTML;}
+    return;
+  }
+  const btn=$('#bcBtn');btn.classList.remove('live','wait','err');
+  if(!T||!T.bcast){el.textContent='';btn.textContent='📡 Broadcast';btn.title='Put the live bracket on the internet for anyone with the link';return;}
+  btn.classList.add(BC.status==='live'?'live':BC.status==='error'?'err':'wait');
+  btn.textContent=BC.status==='live'?'LIVE':BC.status==='error'?'📡 Offline':'📡 Starting…';
+  btn.title=BC.status==='live'?'Broadcasting live — code '+T.bcast.code+'. Click for the link and QR code.':BC.status==='error'?'Not reaching the server — retrying. Click for details.':'Starting broadcast…';
+  if(BC.status==='live')el.innerHTML=`📡 <b>LIVE</b> · code ${T.bcast.code} · pushed ${new Date(BC.last).toLocaleTimeString()}`;
+  else if(BC.status==='error'){el.classList.add('err');el.innerHTML=`📡 <b>Not reaching the server</b> (${esc(BC.err)}) — retrying`;}
+  else{el.classList.add('wait');el.innerHTML='📡 <b>Starting…</b>';}
+}
+async function testDb(url){
+  const base=dbBase(url);if(!base)return{ok:false,msg:'Enter the database URL first.'};
+  const code='TEST'+genCode(6),key=genCode(16);
+  try{
+    const w=await fetch(`${base}/t/${code}.json`,{method:'PUT',body:JSON.stringify({key,state:{hello:1}})});
+    if(w.status===401||w.status===403)return{ok:false,msg:'The database refused the write (HTTP '+w.status+'). The rules from step 3 are not published yet, or were pasted incorrectly.'};
+    if(!w.ok)return{ok:false,msg:'Unexpected response '+w.status+'. Check the URL — it should end in firebaseio.com or firebasedatabase.app.'};
+    const r=await fetch(`${base}/t/${code}/state.json`);if(!r.ok)return{ok:false,msg:'Wrote OK but viewers could not read it back (HTTP '+r.status+'). Re-check the rules: "state" needs ".read": true.'};
+    const k=await fetch(`${base}/t/${code}/key.json`);if(k.ok){const v=await k.json();if(v!==null)return{ok:false,msg:'Wrote OK, but the secret key is publicly readable — anyone could change your bracket. Re-paste the rules exactly.'};}
+    await fetch(`${base}/t/${code}.json`,{method:'PUT',body:JSON.stringify({key,state:null})});
+    return{ok:true,msg:'Connected. Writes work, viewers can read, and the secret stays private.'};
+  }catch(e){return{ok:false,msg:'Could not reach that address ('+(e.message||e)+'). Check for typos; it must start with https://.'};}
+}
+function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){}}
+/* ---------- Broadcast setup wizard ---------- */
+const WIZ={get(){try{return JSON.parse(localStorage.getItem('pb.wiz')||'{}');}catch(e){return{};}},set(o){try{localStorage.setItem('pb.wiz',JSON.stringify(o));}catch(e){}}};
+function openUrl(u){window.open(u,'_blank','noopener');}
+// Accepts a pasted database URL in any of the forms people copy from the Firebase console
+function normalizeDbUrl(raw){
+  let s=(raw||'').trim();
+  let m=s.match(/https?:\/\/[a-z0-9.-]+\.(?:firebaseio\.com|firebasedatabase\.app)/i);if(m)return m[0];
+  m=s.match(/\/database\/([a-z0-9-]+)\/(?:data|rules)/i);if(m)return 'https://'+m[1]+(/-[a-z]+-[a-z]+\d$/i.test(m[1].replace(/-default-rtdb$/,''))?'.firebasedatabase.app':'.firebaseio.com');
+  m=s.match(/^[a-z0-9-]+\.(?:firebaseio\.com|firebasedatabase\.app)/i);if(m)return 'https://'+m[0];
+  return s;
+}
+function normalizeHost(raw){let h=(raw||'').trim().replace(/[#?].*$/,'');if(h&&!/^https?:\/\//i.test(h))h='https://'+h;return h.replace(/\/index\.html?$/i,'/');}
+// A clean copy of this app (as a file) for hosting: the page source with any live state stripped out
+function selfCopyHtml(){
+  const doc=document.documentElement.cloneNode(true);
+  doc.querySelectorAll('.overlay,svg.wires,.toast').forEach(e=>e.remove());
+  for(const id of ['wb','lb','pb','ptable','standings','queue','gf','champ','p_n','p_gross','p_house','p_pot','p_pct_total','p_amt_total','p_recnote'])(doc.querySelector('#'+id)||{}).innerHTML='';
+  const body=doc.querySelector('body');body.removeAttribute('class');body.removeAttribute('style');
+  const set=(sel,hidden)=>{const e=doc.querySelector(sel);if(e){if(hidden)e.setAttribute('hidden','');else e.removeAttribute('hidden');}};
+  set('#setup',false);set('#tourney',true);set('#tbar',true);set('#champ',true);set('#pipanel',true);
+  const sub=doc.querySelector('#hdrsub');if(sub)sub.textContent='Double Elimination · 8-Ball / 9-Ball';const st=doc.querySelector('#bcStatus');if(st)st.textContent='';
+  const ta=doc.querySelector('#names');if(ta)ta.textContent='';
+  for(const id of ['manifest','appleIcon','favIcon']){const e=doc.querySelector('#'+id);if(e)e.removeAttribute('href');}
+  const dm=doc.querySelector('meta[name="pb-default-db"]');if(dm)dm.setAttribute('content',dbBase()||'');
+  const dh=doc.querySelector('meta[name="pb-default-host"]');if(dh)dh.setAttribute('content',(BC.host||'').trim());
+  return '<!DOCTYPE html>\n'+doc.outerHTML;
+}
+// Service worker for the hosted copy (Edge/Chrome on Android need one before they offer "Add to phone" / Install).
+// Caches index.html so the page also opens with no signal, then refreshes it from the network when it can.
+const SW_JS=`const C='pb-v1';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.add('./index.html')).catch(()=>{}));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+self.addEventListener('fetch',e=>{
+  const u=new URL(e.request.url);
+  if(e.request.mode==='navigate'||u.pathname.endsWith('/index.html')){
+    e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put('./index.html',cp)).catch(()=>{});return r;}).catch(()=>caches.match('./index.html')));
+  }
+});`;
+function downloadText(name,text,type){const b=new Blob([text],{type:type||'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+function appIcon(size){
+  const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d'),r=size*0.22;
+  x.fillStyle='#1f7a4a';x.beginPath();x.moveTo(r,0);x.arcTo(size,0,size,size,r);x.arcTo(size,size,0,size,r);x.arcTo(0,size,0,0,r);x.arcTo(0,0,size,0,r);x.fill();
+  x.fillStyle='#0b0f0c';x.beginPath();x.arc(size/2,size/2,size*0.33,0,7);x.fill();
+  x.fillStyle='#fff';x.beginPath();x.arc(size/2,size/2,size*0.17,0,7);x.fill();
+  x.fillStyle='#0b0f0c';x.font='bold '+Math.round(size*0.24)+'px Segoe UI,Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('8',size/2,size/2+size*0.012);
+  return c.toDataURL('image/png');
+}
+const APP_VERSION=(document.querySelector('meta[name="pb-version"]')||{}).content||'0';
+function verNum(v){return String(v||'0').split('.').map(x=>+x||0);}
+function verNewer(a,b){const x=verNum(a),y=verNum(b);for(let i=0;i<Math.max(x.length,y.length);i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;}
+// Ask the website whether a newer build is up. Runs for the hosted/installed copy (checks itself) and for the
+// desktop file (checks the built-in viewer site), on load and every 30 minutes.
+async function checkForUpdate(){
+  if(VIEWER)return;
+  const isHosted=/^https?:$/.test(location.protocol);
+  const base=isHosted?location.origin+location.pathname.replace(/[^/]*$/,''):(DEFAULT_HOST||BC.host||'');
+  if(!base)return;
+  try{
+    const r=await fetch(base.replace(/\/?$/,'/')+'index.html?nocache='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const m=(await r.text()).match(/name="pb-version" content="([^"]+)"/);if(!m)return;
+    const remote=m[1];$('#verTag').textContent='v'+APP_VERSION+(verNewer(remote,APP_VERSION)?' · v'+remote+' available':'');
+    const btn=$('#updBtn');
+    if(verNewer(remote,APP_VERSION)){
+      btn.hidden=false;
+      btn.textContent=isHosted?'⬆ Update Available (v'+remote+')':'⬆ Newer version online (v'+remote+')';
+      btn.onclick=async()=>{
+        if(!isHosted){alert('Version '+remote+' is on the website ('+base+'). This desktop file is a separate copy: get the newer Pool Bracket.html from whoever maintains it, or run the app from the website instead.');return;}
+        btn.textContent='Updating…';
+        try{const regs=await navigator.serviceWorker.getRegistrations();for(const g of regs){await g.update();}}catch(e){}
+        try{const ks=await caches.keys();for(const k of ks)await caches.delete(k);}catch(e){}
+        location.reload();
+      };
+    }
+  }catch(e){}
+}
+function setupPWA(){
+  try{
+    const i192=appIcon(192),i512=appIcon(512);
+    $('#appleIcon').href=appIcon(180);$('#favIcon').href=appIcon(64);
+    if(!/^https?:$/.test(location.protocol))return;                       // installing only makes sense for the hosted copy
+    const dir=location.pathname.replace(/[^/]*$/,'');
+    const man={name:VIEWER?'Pool Bracket Live':'Pool Bracket',short_name:VIEWER?'Bracket Live':'Pool Bracket',
+      start_url:location.pathname+location.search,scope:dir,display:'standalone',orientation:'any',background_color:'#0f1512',theme_color:'#0f1512',
+      description:VIEWER?'Live double-elimination pool bracket':'Double-elimination pool tournament brackets and payouts',
+      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any'},{src:i512,sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+    $('#manifest').href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(man));
+    if('serviceWorker' in navigator)navigator.serviceWorker.register(dir+'sw.js').catch(()=>{});
+  }catch(e){}
+}
+// "Install this app?" bar for the hosted copy. Android browsers hand us the install prompt via beforeinstallprompt;
+// iPhones have no prompt, so we show the Share → Add to Home Screen instruction instead.
+let INSTALL_EVT=null;
+function installBar(){
+  if(VIEWER||!/^https?:$/.test(location.protocol))return;
+  if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;         // already installed
+  try{if(sessionStorage.getItem('pb.installSnooze'))return;}catch(e){}                          // "Not Now" lasts until the next open, not longer
+  const ua=navigator.userAgent,isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const isAndroid=/Android/.test(ua),isDesktop=!isIOS&&!isAndroid;
+  let bar=$('#installBar');
+  if(!bar){bar=document.createElement('div');bar.id='installBar';document.body.appendChild(bar);}
+  const snooze=()=>{try{sessionStorage.setItem('pb.installSnooze','1');}catch(e){}bar.classList.remove('show');};
+  const paint=(mode)=>{
+    const icon=`<img src="${appIcon(96)}" alt="">`;
+    if(mode==='prompt')bar.innerHTML=icon+'<div class="t"><b>Install Pool Bracket on this '+(isDesktop?'computer':'phone')+'</b><span>'+(isDesktop?'Opens in its own window with a Start menu / taskbar icon, and works without internet.':'Opens full screen like an app and works without signal.')+'</span></div><button type="button" id="ibNo">Not Now</button><button type="button" class="primary" id="ibGo">Install</button>';
+    else if(mode==='ios')bar.innerHTML=icon+'<div class="t"><b>Add Pool Bracket to your Home Screen</b><span>Tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.</span></div><button type="button" id="ibNo">Got It</button>';
+    else bar.innerHTML=icon+'<div class="t"><b>Install Pool Bracket on this phone</b><span>Tap your browser\'s <b>⋮ / ⋯ menu</b> and choose <b>Add to phone</b> (Edge) or <b>Install app</b> (Chrome). If this page opened inside another app (Messenger, Gmail…), copy the link and open it in Edge or Chrome first.</span></div><button type="button" id="ibNo">Not Now</button><button type="button" class="primary" id="ibCopy">Copy Link</button>';
+    bar.classList.add('show');
+    bar.querySelector('#ibNo').onclick=snooze;
+    const go=bar.querySelector('#ibGo');if(go)go.onclick=async()=>{if(!INSTALL_EVT)return;INSTALL_EVT.prompt();const r=await INSTALL_EVT.userChoice.catch(()=>null);INSTALL_EVT=null;bar.classList.remove('show');if(!(r&&r.outcome==='accepted'))snooze();};
+    const cp=bar.querySelector('#ibCopy');if(cp)cp.onclick=()=>{copyText(location.origin+location.pathname);cp.textContent='Copied ✓';};
+  };
+  if(isIOS){paint('ios');return;}
+  // Android/desktop: wait briefly for the browser to offer the prompt; on Android if it never comes we are most likely in an in-app tab
+  if(INSTALL_EVT){paint('prompt');return;}
+  const t=setTimeout(()=>{if(!INSTALL_EVT&&isAndroid)paint('manual');},4000);
+  window.addEventListener('beforeinstallprompt',()=>{clearTimeout(t);paint('prompt');},{once:true});
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EVT=e;});
+window.addEventListener('appinstalled',()=>{const b=$('#installBar');if(b)b.classList.remove('show');});
+function downloadSelf(){const b=new Blob([selfCopyHtml()],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='index.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+
+// Owner lock: only devices unlocked with the owner code (or the one that did the original setup) can open Broadcast setup.
+const OWNER_HASH=(document.querySelector('meta[name="pb-owner"]')||{}).content||'';
+function isOwner(){if(!OWNER_HASH)return true;try{return localStorage.getItem('pb.owner')==='1'||!!localStorage.getItem('pb.db');}catch(e){return false;}}
+async function ownerHash(code){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pb-owner:'+code.trim().toUpperCase()));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function ownerUnlock(){
+  if(isOwner()){if(confirm('This device is in owner mode (Broadcast setup is available).\n\nLock it? Setup will ask for the PIN again.')){try{localStorage.removeItem('pb.owner');localStorage.removeItem('pb.db');}catch(e){}alert('Owner mode off on this device.');}return;}
+  const c=prompt('Enter the owner PIN to open Broadcast setup:');if(!c)return false;
+  if(await ownerHash(c)===OWNER_HASH){try{localStorage.setItem('pb.owner','1');}catch(e){}return true;}
+  alert('Wrong PIN.');return false;
+}
+async function broadcastDialog(){
+  const w=WIZ.get();
+  const setupDone=!!dbBase()&&!!(BC.host||'').trim();
+  if(!setupDone&&!isOwner()){await dialog({title:'Broadcast',body:Object.assign(document.createElement('p'),{textContent:'Broadcasting isn\'t set up in this copy of the app. Ask the person who gave it to you for an updated copy.'}),buttons:[{label:'OK',value:null}]});return;}
+  if(setupDone&&!w.forceWizard)return broadcastPanel();
+  delete w.forceWizard;WIZ.set(w);
+  return setupWizard();
+}
+
+// The one-click panel once setup is complete
+async function broadcastPanel(){
+  const body=document.createElement('div');
+  const q=sel=>body.querySelector(sel);
+  function paint(){
+    if(!T){body.innerHTML='<p class="muted">Draw a bracket first, then come back here to start broadcasting it.</p>';return;}
+    if(T.bcast){
+      const link=watchLink();
+      body.innerHTML=`<p>This tournament is <b class="ok">broadcasting</b> as code <b>${T.bcast.code}</b>. Share the link or let people scan the code.</p>
+        <div class="link"><input type="text" id="wl" readonly value="${esc(link)}"><button type="button" id="copyLink">Copy Link</button><button type="button" id="openLink">Open</button></div>
+        <img class="qr" alt="QR code for the live bracket" width="240" height="240" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}">
+        <p class="muted">Every result you enter is pushed within a second. Leave this window open while the tournament runs. If your internet drops, the app keeps working and catches up when it's back.</p>
+        <div class="acts" style="justify-content:flex-start"><button type="button" id="stopBc">Stop Broadcasting</button><button type="button" id="killBc" class="danger">Stop and Remove From Server</button><span style="flex:1"></span><button type="button" id="reSetup">Setup…</button></div>`;
+      q('#copyLink').onclick=()=>{copyText(link);q('#copyLink').textContent='Copied ✓';};
+      q('#openLink').onclick=()=>openUrl(link);
+      q('#stopBc').onclick=()=>{T.bcast=null;BC.status='';save();renderBcastStatus();paint();};
+      q('#killBc').onclick=async()=>{const b=T.bcast;T.bcast=null;BC.status='';try{await fetch(`${dbBase()}/t/${b.code}.json`,{method:'PUT',body:JSON.stringify({key:b.key,state:null})});}catch(e){}save();renderBcastStatus();paint();};
+    }else{
+      body.innerHTML=`<p>Setup is complete. Starting creates a short code for this tournament and begins pushing the live bracket to your viewer page.</p>
+        <p class="muted">Database: <b>${esc(dbHost())}</b>${BC.db===DEFAULT_DB&&DEFAULT_DB?' (built in)':''}<br>Viewer page: <b>${esc(BC.host)}</b></p>
+        <div class="acts" style="justify-content:flex-start"><button type="button" id="startBc" class="primary">📡 Start Broadcasting This Tournament</button><span style="flex:1"></span><button type="button" id="reSetup">Setup…</button></div>`;
+      q('#startBc').onclick=()=>{T.bcast={code:genCode(6),key:genCode(24),started:Date.now()};BC.status='';renderBcastStatus();save();pushState();paint();};
+    }
+    q('#reSetup').onclick=async()=>{if(!isOwner()&&!(await ownerUnlock()))return;document.querySelector('.overlay')?.remove();const w=WIZ.get();w.forceWizard=true;WIZ.set(w);setupWizard();};
+  }
+  paint();
+  await dialog({title:'Broadcast the Bracket',body,buttons:[{label:'Close',value:null}]});
+}
+
+// Step-by-step first-time setup
+async function setupWizard(){
+  const w=WIZ.get();let step=w.step||0;
+  const steps=[
+    {title:'Put Your Bracket on the Internet',render:(el)=>{el.innerHTML=`
+      <p>In about ten minutes you'll have a link anyone can open on their phone to watch this bracket update live. After this one-time setup, broadcasting any tournament is a single click.</p>
+      <p>You'll need:</p><ol><li>A Google account (for a free Firebase database — this carries the live data).</li><li>A free Netlify account (this hosts the viewer page; sign-up takes a minute, email or GitHub).</li></ol>
+      <p class="muted">Both are free for this use. No credit card. I'll open each page for you and check each step before moving on.</p>`;return{next:'Start'};}},
+    {title:'Step 1 of 6 · Create a Firebase Project',render:(el)=>{el.innerHTML=`
+      <ol><li>Click <b>Open Firebase Console</b> below. Sign in with your Google account if asked.</li>
+      <li>Click <b>Create a project</b> (it may say "Add project" or "Get started").</li>
+      <li>Name it <b>pool-bracket</b> (any name works). Click Continue.</li>
+      <li>If it asks about Google Analytics, turn it <b>off</b> and click <b>Create project</b>. Wait for "Your new project is ready", then click Continue.</li></ol>
+      <button type="button" class="primary" id="o1">Open Firebase Console ↗</button>
+      <p class="muted" style="margin-top:10px">Leave that tab open — the next steps use it.</p>`;el.querySelector('#o1').onclick=()=>openUrl('https://console.firebase.google.com/');return{next:'I created the project →'};}},
+    {title:'Step 2 of 6 · Create the Realtime Database',render:(el)=>{el.innerHTML=`
+      <ol><li>Click <b>Open Realtime Database</b> below (it opens inside your project). If it asks you to pick a project, choose <b>pool-bracket</b>.</li>
+      <li>Click <b>Create Database</b>.</li>
+      <li>Location: keep <b>United States</b>. Click Next.</li>
+      <li>Security rules: choose <b>Start in locked mode</b>. Click <b>Enable</b>.</li></ol>
+      <button type="button" class="primary" id="o2">Open Realtime Database ↗</button>
+      <p class="muted" style="margin-top:10px">Make sure it says <b>Realtime Database</b> at the top, not "Firestore Database" — they're different products and Firestore won't work here.</p>`;el.querySelector('#o2').onclick=()=>openUrl('https://console.firebase.google.com/project/_/database');return{next:'Database created →'};}},
+    {title:'Step 3 of 6 · Paste In the Security Rules',render:(el)=>{el.innerHTML=`
+      <p>The rules let anyone <i>read</i> a broadcast but only your app <i>write</i> to it.</p>
+      <ol><li>Click <b>Copy Rules</b> below.</li>
+      <li>Click <b>Open the Rules Tab</b>. In the editor, select everything (Ctrl+A), delete it, and paste (Ctrl+V).</li>
+      <li>Click <b>Publish</b> at the top of the editor. It should show no errors.</li></ol>
+      <pre>${esc(RULES_JSON)}</pre>
+      <div style="display:flex;gap:8px"><button type="button" class="primary" id="cp">Copy Rules</button><button type="button" id="o3">Open the Rules Tab ↗</button></div>`;
+      el.querySelector('#cp').onclick=e=>{copyText(RULES_JSON);e.target.textContent='Copied ✓';};el.querySelector('#o3').onclick=()=>openUrl('https://console.firebase.google.com/project/_/database/rules');return{next:'Rules published →'};}},
+    {title:'Step 4 of 6 · Connect the App to Your Database',render:(el,ctl)=>{el.innerHTML=`
+      <ol><li>Click <b>Open the Data Tab</b>. At the top of the data panel there's an address that looks like <i>https://pool-bracket-default-rtdb.firebaseio.com/</i>.</li>
+      <li>Copy it and paste it below. (Pasting the whole browser address bar also works — I'll pick out the right part.)</li></ol>
+      <button type="button" id="o4">Open the Data Tab ↗</button>
+      <div class="link" style="margin-top:12px"><input type="url" id="dbUrl" placeholder="https://pool-bracket-default-rtdb.firebaseio.com/" value="${esc(BC.db)}"><button type="button" class="primary" id="t4">Test Connection</button></div>
+      <p id="dbMsg" class="muted" style="margin:8px 0 0">${dbBase()?'A database is already saved. Test again to confirm, or paste a new address.':'The test writes a tiny record, reads it back the way a viewer would, and checks the rules are protecting your bracket.'}</p>`;
+      el.querySelector('#o4').onclick=()=>openUrl('https://console.firebase.google.com/project/_/database/data');
+      const run=async()=>{const u=normalizeDbUrl(el.querySelector('#dbUrl').value);el.querySelector('#dbUrl').value=u;const msg=el.querySelector('#dbMsg');msg.textContent='Testing…';msg.className='muted';
+        const r=await testDb(u);msg.textContent=r.msg+(r.ok?' Saved.':'');msg.className=r.ok?'ok':'bad';
+        if(r.ok){BC.db=u;try{localStorage.setItem('pb.db',u);}catch(e){}ctl.enableNext(true);}};
+      el.querySelector('#t4').onclick=run;el.querySelector('#dbUrl').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+      return{next:'Next →',nextEnabled:!!dbBase()};}},
+    {title:'Step 5 of 6 · Put the Viewer Page Online',render:(el)=>{el.innerHTML=`
+      <p>Viewers' phones can't open a file on your desktop, so a copy of this app needs a web address. Netlify hosts it free.</p>
+      <ol><li>Click <b>Download index.html</b>, then <b>Download sw.js</b>. (sw.js is a tiny helper that lets phones install the page as an app.)</li>
+      <li>Make a new folder anywhere (e.g. <b>bracket-site</b> on your Desktop) and move both files into it. The folder should contain only those two files.</li>
+      <li>Click <b>Open Netlify Drop</b>. Sign up or log in (free). Then <b>drag the folder</b> onto the big drop zone.</li>
+      <li>After a few seconds Netlify shows your site's address, like <i>https://quiet-otter-1234.netlify.app</i>. Copy it — you'll paste it in the next step.</li></ol>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" id="dl">Download index.html</button><button type="button" class="primary" id="dlsw">Download sw.js</button><button type="button" id="o5">Open Netlify Drop ↗</button></div>
+      <p class="muted" style="margin-top:10px"><b>Already have a site from before?</b> Don't use Netlify Drop again — that makes a brand-new site with a new address. Instead open your existing project in Netlify, go to its <b>Deploys</b> tab, and drag the folder there. Same address, nothing else to change.</p>
+      <p class="muted">If you'd rather use GitHub Pages or your own web host, upload the same index.html there instead. Any address that serves the file works.</p>`;
+      el.querySelector('#dl').onclick=downloadSelf;el.querySelector('#dlsw').onclick=()=>downloadText('sw.js',SW_JS,'text/javascript');el.querySelector('#o5').onclick=()=>openUrl('https://app.netlify.com/drop');return{next:'It\'s online →'};}},
+    {title:'Step 6 of 6 · Save Your Viewer Address',render:(el,ctl)=>{el.innerHTML=`
+      <p>Paste the address Netlify (or your host) gave you:</p>
+      <div class="link"><input type="url" id="hostUrl" placeholder="https://quiet-otter-1234.netlify.app" value="${esc(BC.host)}"><button type="button" class="primary" id="s6">Save</button></div>
+      <p id="hostMsg" class="muted" style="margin:8px 0 0"></p>
+      <p class="muted">Tip: after saving, click <b>Open Viewer Page</b> to confirm it loads. It will say "Waiting for the tournament director to start broadcasting" — that's correct until you start one.</p>
+      <button type="button" id="o6" ${BC.host?'':'disabled'}>Open Viewer Page ↗</button>`;
+      const save6=()=>{const h=normalizeHost(el.querySelector('#hostUrl').value);el.querySelector('#hostUrl').value=h;const msg=el.querySelector('#hostMsg');
+        if(!/^https:\/\/[^\s]+\.[a-z]{2,}/i.test(h)){msg.textContent='That doesn\'t look like a web address. It should start with https:// and end in something like .netlify.app';msg.className='bad';return;}
+        BC.host=h;try{localStorage.setItem('pb.host',h);}catch(e){}msg.textContent='Saved.';msg.className='ok';el.querySelector('#o6').disabled=false;ctl.enableNext(true);};
+      el.querySelector('#s6').onclick=save6;el.querySelector('#hostUrl').addEventListener('keydown',e=>{if(e.key==='Enter')save6();});
+      el.querySelector('#o6').onclick=()=>openUrl(BC.host.replace(/\/?$/,'/')+'?watch=TEST&db='+encodeURIComponent(dbHost()));
+      return{next:'Finish →',nextEnabled:!!(BC.host||'').trim()};}},
+    {title:'All Set',render:(el)=>{el.innerHTML=`
+      <p class="ok" style="font-size:16px"><b>✓ Broadcasting is ready.</b></p>
+      <p>From now on, click <b>📡 Broadcast</b> during any tournament and press <b>Start</b>. You'll get a link and a QR code for that event.</p>
+      <ul><li>Database: <b>${esc(dbHost())}</b></li><li>Viewer page: <b>${esc(BC.host)}</b></li></ul>
+      <p class="muted">Anyone who opens the hosted copy gets this database built in, so they can broadcast with one click — no setup of their own.</p>
+      <p class="muted">When you receive an updated version of this app: refresh the app first, then download a fresh index.html from this wizard (Setup… → step 5) and drag the folder onto your existing project's <b>Deploys</b> page in Netlify — not onto Netlify Drop, which would create a second site.</p>`;return{next:T?'Open Broadcast Panel':'Done'};}},
+  ];
+  const body=document.createElement('div');
+  const ov=document.createElement('div');ov.className='overlay';const d=document.createElement('div');d.className='dlg';d.style.maxWidth='760px';
+  const h3=document.createElement('h3');const prog=document.createElement('div');prog.className='muted';prog.style.marginBottom='10px';
+  const content=document.createElement('div');const acts=document.createElement('div');acts.className='acts';
+  const back=document.createElement('button');back.textContent='← Back';const close=document.createElement('button');close.textContent='Close';const next=document.createElement('button');next.className='primary';
+  const spacer=document.createElement('span');spacer.style.flex='1';
+  acts.append(back,close,spacer,next);d.append(h3,prog,content,acts);ov.appendChild(d);document.body.appendChild(ov);
+  const ctl={enableNext:v=>{next.disabled=!v;}};
+  function show(i){
+    step=Math.max(0,Math.min(steps.length-1,i));const st=steps[step];
+    h3.textContent=st.title;prog.textContent=step>0&&step<steps.length-1?`Progress: ${'●'.repeat(step)}${'○'.repeat(steps.length-2-step)}`:'';
+    content.innerHTML='';const r=st.render(content,ctl)||{};
+    next.textContent=r.next||'Next →';next.disabled=r.nextEnabled===false;back.style.visibility=step===0?'hidden':'visible';
+    const w2=WIZ.get();w2.step=step;WIZ.set(w2);
+  }
+  back.onclick=()=>show(step-1);
+  close.onclick=()=>{ov.remove();};
+  next.onclick=()=>{if(step===steps.length-1){ov.remove();const w2=WIZ.get();w2.step=0;WIZ.set(w2);if(T&&dbBase()&&BC.host)broadcastPanel();}else show(step+1);};
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  show(step);
+}
+$('#bcBtn').onclick=broadcastDialog;$('#bcStatus').onclick=()=>{if(!VIEWER)broadcastDialog();};
+
+/* ---------- viewer: follow a broadcast ---------- */
+function applyRemote(data){
+  if(!data||!data.players||!data.N){BC.status='waiting';BC.err='';renderBcastStatus();return;}
+  // Firebase does not store empty objects/arrays, so put back anything that may be missing
+  data.history=[];data.active=data.active||{};data.results=data.results||{};data.payout=data.payout||{};
+  data.payout.pct=data.payout.pct||[];data.payout.amt=data.payout.amt||[];if(data.skills&&!Array.isArray(data.skills))data.skills=Object.assign([],data.skills);data.players=Array.isArray(data.players)?data.players:Object.values(data.players);
+  try{T=data;render();BC.status='live';BC.last=Date.now();BC.err='';}
+  catch(e){BC.status='viewerror';BC.err=String(e.message||e);}
+  renderBcastStatus();
+}
+function startWatching(code){
+  const url=`${dbBase()}/t/${code}/state.json`;
+  const refetch=async()=>{
+    try{const r=await fetch(url);
+      if(r.ok)applyRemote(await r.json());
+      else{BC.status='viewerror';BC.err=(r.status===401||r.status===403)?'the database rules are blocking viewers (HTTP '+r.status+') — re-check step 3 of the setup':'HTTP '+r.status+' from '+dbHost();renderBcastStatus();}
+    }catch(e){BC.status='viewerror';BC.err='cannot reach '+dbHost()+' ('+(e.message||e)+')';renderBcastStatus();}};
+  const connect=()=>{
+    try{BC.es&&BC.es.close();}catch(e){}
+    try{
+      const es=new EventSource(url);BC.es=es;
+      es.addEventListener('put',e=>{try{const d=JSON.parse(e.data);if(d.path==='/')applyRemote(d.data);else refetch();}catch(err){refetch();}});
+      es.addEventListener('patch',refetch);
+      es.addEventListener('cancel',()=>{es.close();setTimeout(connect,5000);});
+      es.addEventListener('auth_revoked',()=>{es.close();setTimeout(connect,5000);});
+      es.onerror=()=>{if(BC.status==='live')BC.status='reconnecting';renderBcastStatus();};
+    }catch(e){}
+  };
+  connect();refetch();
+  clearInterval(BC.poll);BC.poll=setInterval(refetch,20000);   // belt and braces if the stream stalls
+}
+
+(function init(){
+  {let taps=[];$('#verTag').addEventListener('click',()=>{const n=Date.now();taps=taps.filter(t=>n-t<3000);taps.push(n);if(taps.length>=5){taps=[];ownerUnlock().then(ok=>{if(ok)alert('Owner mode on for this device. Broadcast → Setup… opens without the PIN here.');});}});}
+  setupPWA();setTimeout(installBar,1500);$('#verTag').textContent='v'+APP_VERSION;setTimeout(checkForUpdate,2500);setInterval(checkForUpdate,30*60*1000);
+  if(VIEWER){
+    document.body.classList.add('viewer');
+    BC.db=QS.get('db')||BC.db;
+    $('#setup').hidden=true;$('#tourney').hidden=false;$('#tbar').hidden=false;
+    $('#hdrsub').textContent='Live Bracket';BC.status='waiting';renderBcastStatus();
+    document.body.classList.add('board','showall');
+    startWatching(QS.get('watch'));
+    return;
+  }
+  try{const s=localStorage.getItem(KEY);if(s){const t=JSON.parse(s);if(t&&t.players&&t.N){T=t;T.history=T.history||[];render();if(T.bcast){pushState();}return;}}}catch(e){}
+})();
+</script>
+</body>
+</html>
