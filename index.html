@@ -11,7 +11,7 @@
 <!-- Built-in broadcast database. Filled in automatically when you download the hosted copy from the Broadcast setup,
      so people you share the app with can broadcast with one click instead of creating their own database. -->
 <meta name="pb-default-db" content="https://pool-bracket-aabd0-default-rtdb.firebaseio.com">
-<meta name="pb-version" content="2026.11.10.29">
+<meta name="pb-version" content="2026.11.10.30">
 <meta name="pb-owner" content="8a2c855b843601999226f70301194399cf759b8bc62fd838119026ce0ceb3161">
 <meta name="pb-default-host" content="https://cgammons01-sys.github.io/pool-bracket/">
 <link rel="manifest" id="manifest">
@@ -1738,7 +1738,7 @@ async function setupWizard(){
   const steps=[
     {title:'Put Your Bracket on the Internet',render:(el)=>{el.innerHTML=`
       <p>In about ten minutes you'll have a link anyone can open on their phone to watch this bracket update live. After this one-time setup, broadcasting any tournament is a single click.</p>
-      <p>You'll need:</p><ol><li>A Google account (for a free Firebase database — this carries the live data).</li><li>A free Netlify account (this hosts the viewer page; sign-up takes a minute, email or GitHub).</li></ol>
+      <p>You'll need:</p><ol><li>A Google account (for a free Firebase database — this carries the live data).</li><li>A free GitHub account (GitHub Pages hosts the viewer page).</li></ol>
       <p class="muted">Both are free for this use. No credit card. I'll open each page for you and check each step before moving on.</p>`;return{next:'Start'};}},
     {title:'Step 1 of 6 · Create a Firebase Project',render:(el)=>{el.innerHTML=`
       <ol><li>Click <b>Open Firebase Console</b> below. Sign in with your Google account if asked.</li>
@@ -1774,24 +1774,21 @@ async function setupWizard(){
         if(r.ok){BC.db=u;try{localStorage.setItem('pb.db',u);}catch(e){}ctl.enableNext(true);}};
       el.querySelector('#t4').onclick=run;el.querySelector('#dbUrl').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
       return{next:'Next →',nextEnabled:!!dbBase()};}},
-    {title:'Step 5 of 6 · Put the Viewer Page Online',render:(el)=>{el.innerHTML=`
-      <p>Viewers' phones can't open a file on your desktop, so a copy of this app needs a web address. Netlify hosts it free.</p>
-      <ol><li>Click <b>Download index.html</b>, then <b>Download sw.js</b>. (sw.js is a tiny helper that lets phones install the page as an app.)</li>
-      <li>Make a new folder anywhere (e.g. <b>bracket-site</b> on your Desktop) and move both files into it. The folder should contain only those two files.</li>
-      <li>Click <b>Open Netlify Drop</b>. Sign up or log in (free). Then <b>drag the folder</b> onto the big drop zone.</li>
-      <li>After a few seconds Netlify shows your site's address, like <i>https://quiet-otter-1234.netlify.app</i>. Copy it — you'll paste it in the next step.</li></ol>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" id="dl">Download index.html</button><button type="button" class="primary" id="dlsw">Download sw.js</button><button type="button" id="o5">Open Netlify Drop ↗</button></div>
-      <p class="muted" style="margin-top:10px"><b>Already have a site from before?</b> Don't use Netlify Drop again — that makes a brand-new site with a new address. Instead open your existing project in Netlify, go to its <b>Deploys</b> tab, and drag the folder there. Same address, nothing else to change.</p>
-      <p class="muted">If you'd rather use GitHub Pages or your own web host, upload the same index.html there instead. Any address that serves the file works.</p>`;
-      el.querySelector('#dl').onclick=downloadSelf;el.querySelector('#dlsw').onclick=()=>downloadText('sw.js',SW_JS,'text/javascript');el.querySelector('#o5').onclick=()=>openUrl('https://app.netlify.com/drop');return{next:'It\'s online →'};}},
+    {title:'Step 5 of 6 · Put the Viewer Page Online',render:(el)=>{const site=(BC.host||DEFAULT_HOST||'').trim(),gm=site.match(/^https:\/\/([^.\/]+)\.github\.io\/([^\/]+)/i),repo=gm?`https://github.com/${gm[1]}/${gm[2]}`:'https://github.com/new';
+      el.innerHTML=`
+      <p>Viewers' phones can't open a file on your desktop, so a copy of this app lives on the web. It's hosted free on <b>GitHub Pages</b>${site?` at <b>${esc(site)}</b>`:''}.</p>
+      <p><b>Normally there's nothing to do here.</b> The <b>Publish Pool Bracket</b> icon on your desktop puts the current version online in one double-click (the first run asks for a GitHub token and sets everything up). Click <b>It's Online</b> to continue.</p>
+      <p class="muted"><b>Doing it by hand instead</b> (e.g. on a computer without the Publish icon): download both files below, open your GitHub project, choose <b>Add file → Upload files</b>, drop in <b>index.html</b> and <b>sw.js</b>, and click <b>Commit changes</b>. The site updates in 2–4 minutes.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="dl">Download index.html</button><button type="button" id="dlsw">Download sw.js</button><button type="button" id="o5">Open GitHub Project ↗</button></div>`;
+      el.querySelector('#dl').onclick=downloadSelf;el.querySelector('#dlsw').onclick=()=>downloadText('sw.js',SW_JS,'text/javascript');el.querySelector('#o5').onclick=()=>openUrl(repo);return{next:'It\'s Online →'};}},
     {title:'Step 6 of 6 · Save Your Viewer Address',render:(el,ctl)=>{el.innerHTML=`
-      <p>Paste the address Netlify (or your host) gave you:</p>
-      <div class="link"><input type="url" id="hostUrl" placeholder="https://quiet-otter-1234.netlify.app" value="${esc(BC.host)}"><button type="button" class="primary" id="s6">Save</button></div>
+      <p>This is the web address of your viewer page. It's already filled in with your GitHub Pages address — just click <b>Save</b>.</p>
+      <div class="link"><input type="url" id="hostUrl" placeholder="https://yourname.github.io/pool-bracket/" value="${esc(BC.host||DEFAULT_HOST)}"><button type="button" class="primary" id="s6">Save</button></div>
       <p id="hostMsg" class="muted" style="margin:8px 0 0"></p>
       <p class="muted">Tip: after saving, click <b>Open Viewer Page</b> to confirm it loads. It will say "Waiting for the tournament director to start broadcasting" — that's correct until you start one.</p>
       <button type="button" id="o6" ${BC.host?'':'disabled'}>Open Viewer Page ↗</button>`;
       const save6=()=>{const h=normalizeHost(el.querySelector('#hostUrl').value);el.querySelector('#hostUrl').value=h;const msg=el.querySelector('#hostMsg');
-        if(!/^https:\/\/[^\s]+\.[a-z]{2,}/i.test(h)){msg.textContent='That doesn\'t look like a web address. It should start with https:// and end in something like .netlify.app';msg.className='bad';return;}
+        if(!/^https:\/\/[^\s]+\.[a-z]{2,}/i.test(h)){msg.textContent='That doesn\'t look like a web address. It should look like https://yourname.github.io/pool-bracket/';msg.className='bad';return;}
         BC.host=h;try{localStorage.setItem('pb.host',h);}catch(e){}msg.textContent='Saved.';msg.className='ok';el.querySelector('#o6').disabled=false;ctl.enableNext(true);};
       el.querySelector('#s6').onclick=save6;el.querySelector('#hostUrl').addEventListener('keydown',e=>{if(e.key==='Enter')save6();});
       el.querySelector('#o6').onclick=()=>openUrl(BC.host.replace(/\/?$/,'/')+'?watch=TEST&db='+encodeURIComponent(dbHost()));
@@ -1801,7 +1798,7 @@ async function setupWizard(){
       <p>From now on, click <b>📡 Broadcast</b> during any tournament and press <b>Start</b>. You'll get a link and a QR code for that event.</p>
       <ul><li>Database: <b>${esc(dbHost())}</b></li><li>Viewer page: <b>${esc(BC.host)}</b></li></ul>
       <p class="muted">Anyone who opens the hosted copy gets this database built in, so they can broadcast with one click — no setup of their own.</p>
-      <p class="muted">When you receive an updated version of this app: refresh the app first, then download a fresh index.html from this wizard (Setup… → step 5) and drag the folder onto your existing project's <b>Deploys</b> page in Netlify — not onto Netlify Drop, which would create a second site.</p>`;return{next:T?'Open Broadcast Panel':'Done'};}},
+      <p class="muted">To put a new version of the app online, double-click <b>Publish Pool Bracket</b> on your desktop. Phones pick it up the next time the app is opened.</p>`;return{next:T?'Open Broadcast Panel':'Done'};}},
   ];
   const body=document.createElement('div');
   const ov=document.createElement('div');ov.className='overlay';const d=document.createElement('div');d.className='dlg';d.style.maxWidth='760px';
